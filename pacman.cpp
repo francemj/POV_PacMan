@@ -41,6 +41,15 @@ char s[50];
 int mainWin, gameWin, topWin, sideWin, scoreWin;
 int winBorder = 6;
 
+// Light Position
+float pos[4] = {x,0,z,0};
+
+float glow_amb[] = {0.1f, 0, 0.1f, 1.0};
+float glow_dif[] = {1, 0, 0, 1.0};
+float glow_spec[] = {0.1f, 0.1f, 0.1f, 1.0};
+float glow_em[] = {0,0,0,0.5f};
+float shiny = 5; //10, 100
+
 void setProjection(int width, int height) {
 	
 	glMatrixMode(GL_PROJECTION);
@@ -83,9 +92,116 @@ void resize(int width, int height) {
 
 }
 
+// 	**********************************
+// 			Lighting Functions
+// 	**********************************
+
+void resetLightingProperties() {
+
+	glow_dif[0] = 0;
+	glow_dif[1] = 0;
+	glow_dif[2] = 1;
+	glow_dif[3] = 1;
+
+	for(int i = 0; i < 4; i++){
+		glow_em[i] = 0; 
+	}
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setPacDotsColour() {
+	glow_em[0] = 1; 
+	glow_em[1] = 1; 
+	glow_em[2] = 0; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setPacManColour() {
+	glow_dif[0] = 1; 
+	glow_dif[1] = 1; 
+	glow_dif[2] = 0; 
+	glow_dif[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_dif);
+}
+
+void setPowerUpColour() {
+	glow_em[0] = 1; 
+	glow_em[1] = 0; 
+	glow_em[2] = 1; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setRedGlow() {
+	glow_em[0] = 1; 
+	glow_em[1] = 0; 
+	glow_em[2] = 0; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setGroundColour() {
+	glow_em[0] = 0; 
+	glow_em[1] = 0; 
+	glow_em[2] = 1; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setBlack(){
+	for(int i = 0; i < 4; i++){
+		glow_dif[i] = 0; 
+	}
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+}
+
+void setWhite(){
+	for(int i = 0; i < 4; i++){
+		glow_dif[i] = 1; 
+	}
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+}
+
+void setGhostColour() {
+	glow_dif[0] = 0.25f; 
+	glow_dif[1] = 0.25f; 
+	glow_dif[2] = 0.25f; 
+	glow_dif[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+}
+
+// 	***************************
+// 			Dots Models
+// 	***************************
+
+void drawPacDots() {
+	glPushMatrix();
+		setPacDotsColour();
+		glTranslatef(0,1.5f,0);
+		glutSolidSphere(0.15,50,50);
+		resetLightingProperties();
+	glPopMatrix();
+}
+
+void drawPowerUps() {
+	glPushMatrix();
+		setPowerUpColour();
+		glTranslatef(0,1.5f,0);
+		glutSolidSphere(0.3,50,50);
+		resetLightingProperties();
+	glPopMatrix();
+}
+
+void drawPacMan() {
+	glutSolidSphere(0.5, 10, 10);
+}
+
 void drawGhost() {
 
-	glColor3f(1.0f, 0.0f, 0.0f);
+	setGhostColour();
 
 	// cylinder body using quadric object
 	glTranslatef(0.0f, 0.75f, 0.0f);
@@ -103,13 +219,14 @@ void drawGhost() {
 
 	// eyes
 	glPushMatrix();
-	glColor3f(1.0f,1.0f,1.0f);
+	setWhite();
 	glTranslatef(0.1f, 0.10f, 0.6f);
 	glutSolidSphere(0.05f,10,10);
 	glTranslatef(-0.2f, 0.0f, 0.0f);
 	glutSolidSphere(0.05f,10,10);
 	glPopMatrix();
-	glColor3f(1.0f, 1.0f, 1.0f);
+	resetLightingProperties();
+	
 }
 
 // create a string using glut
@@ -150,13 +267,14 @@ void updatePosition(float movement){
 
 void renderShapes() {
 	// create 100x100 grey background for ground
-	glColor3f(0.9f, 0.9f, 0.9f);
+	setGroundColour();
 		glBegin(GL_QUADS);
 			glVertex3f(-100.0f, 0.0f, -100.0f);
 			glVertex3f(-100.0f, 0.0f,  100.0f);
 			glVertex3f( 100.0f, 0.0f,  100.0f);
 			glVertex3f( 100.0f, 0.0f, -100.0f);
 		glEnd();
+	resetLightingProperties();
 
 	// create ghosts
 	for(int i=-3; i < 3; i++) {
@@ -165,6 +283,26 @@ void renderShapes() {
 		drawGhost();
 		glPopMatrix();
 	}
+
+	// create Pac Dots
+	for(int i = -3; i < 3; i++)
+		for(int j=-3; j < 3; j++)
+		{
+			glPushMatrix();
+			glTranslatef(i*10.0f+5, 0.0f, j * 10.0f+5);
+			drawPacDots();
+			glPopMatrix();
+		}
+
+	// create Power Ups
+	for(int i = -3; i < 3; i++)
+		for(int j=-3; j < 3; j++)
+		{
+			glPushMatrix();
+			glTranslatef(i*10.0f, 0.0f, j*10.0f+5);
+			drawPowerUps();
+			glPopMatrix();
+		}
 }
 
 // render mainWin, gameWin, topWin, sideWin, scoreWin
@@ -183,9 +321,10 @@ void renderGameWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
-	glTranslatef(x,y,z);
-	glutSolidSphere(0.2, 4, 4);
+		setPacManColour();
+		glTranslatef(x,y,z);
+		drawPacMan();
+		resetLightingProperties();
 	glPopMatrix();
 
 	renderShapes();
@@ -200,9 +339,10 @@ void renderTopWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
-	glTranslatef(x,y,z);
-	glutSolidSphere(0.2, 4, 4);
+		setPacManColour();
+		glTranslatef(x,y,z);
+		drawPacMan();
+		resetLightingProperties();
 	glPopMatrix();
 
 	renderShapes();
@@ -217,9 +357,10 @@ void renderSideWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
-	glTranslatef(x,y,z);
-	glutSolidSphere(0.2, 4, 4);
+		setPacManColour();
+		glTranslatef(x,y,z);
+		drawPacMan();
+		resetLightingProperties();
 	glPopMatrix();
 
 	renderShapes();
@@ -251,9 +392,10 @@ void renderScoreWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
-	glTranslatef(x,y,z);
-	glutSolidSphere(0.2, 4, 4);
+		setPacManColour();
+		glTranslatef(x,y,z);
+		drawPacMan();
+		resetLightingProperties();
 	glPopMatrix();
 
 	renderShapes();
@@ -333,6 +475,16 @@ void init() {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+
+	glLightfv(GL_LIGHT0, GL_POSITION, pos);
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, glow_spec);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
 
 	// register callbacks
 	glutIgnoreKeyRepeat(1);
