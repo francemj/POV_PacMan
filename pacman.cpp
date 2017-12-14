@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <vector>
+using namespace std;
 
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>
@@ -22,7 +24,7 @@ float mY=0.0f;
 // hold xz camera
 float x=0.0f;
 float z=5.0f;
-float y=1.75f;
+float y=0.0f;
 
 // key states
 float dAngle=0.0f;
@@ -40,6 +42,88 @@ char s[50];
 
 int mainWin, gameWin, topWin, sideWin, scoreWin;
 int winBorder = 6;
+
+//Map Generation
+int width, height, maximum;
+GLubyte* image;
+vector<vector<float>> wallMap;
+
+//this material is not needed, testing purposes only
+float amb_turq[4] ={ 0.1f, 0.18725f, 0.1745f, 0.8f };
+float diff_turq[4] ={0.396f, 0.74151f, 0.69102f, 0.8f };
+float spec_turq[4] ={0.297254f, 0.30829f, 0.306678f, 0.8f };
+float shine_turq = 12.8f;
+
+//testing purposes only
+/* LIGHTING */
+float light0_pos[] = {15.0, 15.0, -10.0, 1.0};
+float amb0[4] = {1, 1, 1, 1};
+float diff0[4] = {1, 1, 1, 1};
+float spec0[4] = {1, 1, 1, 1};
+float light1_pos[] = {10.0, 15.0, -10.0, 1.0};
+float amb1[4] = {1, 1, 1, 1};
+float diff1[4] = {1, 1, 1, 1};
+float spec1[4] = {1, 1, 1, 1};
+
+GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
+{
+    GLubyte* img;
+    FILE *fd;
+    int n, m;
+    int  k, nm;
+    char c;
+    int i;
+    char b[100];
+    float s;
+    int red, green, blue;
+    
+    /* first open file and check if it's an ASCII PPM (indicated by P3 at the start) */
+    fd = fopen(file, "r");
+    fscanf(fd,"%[^\n] ",b);
+    if(b[0]!='P'|| b[1] != '3')
+    {
+        printf("%s is not a PPM file!\n",file);
+        exit(0);
+    }
+    printf("%s is a PPM file\n", file);
+    fscanf(fd, "%c",&c);
+    
+    /* next, skip past the comments - any line starting with #*/
+    while(c == '#')
+    {
+        fscanf(fd, "%[^\n] ", b);
+        printf("%s\n",b);
+        fscanf(fd, "%c",&c);
+    }
+    ungetc(c,fd);
+    
+    /* now get the dimensions and maximum colour value from the image */
+    fscanf(fd, "%d %d %d", &n, &m, &k);
+    
+    /* calculate number of pixels and allocate storage for this */
+    nm = n*m;
+    img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
+    s=255.0/k;
+    
+	vector<float> tempVec;
+    /* for every pixel, grab the read green and blue values, storing them in the image data array */
+    for(i=0;i<nm;i++)
+    {
+		tempVec.clear();
+        fscanf(fd,"%d %d %d",&red, &green, &blue );
+        img[3*nm-3*i-3]=red*s;
+		if (i%n == 0)
+		{
+			wallMap.push_back(tempVec);	
+		}
+		wallMap.at(floor(i/n)).push_back(red);
+    }
+    
+    /* finally, set the "return parameters" (width, height, maximum) and return the image array */
+    *width = n;
+    *height = m;
+    *maximum = k;
+}
 
 void setProjection(int width, int height) {
 	
@@ -152,18 +236,51 @@ void renderShapes() {
 	// create 100x100 grey background for ground
 	glColor3f(0.9f, 0.9f, 0.9f);
 		glBegin(GL_QUADS);
-			glVertex3f(-100.0f, 0.0f, -100.0f);
-			glVertex3f(-100.0f, 0.0f,  100.0f);
-			glVertex3f( 100.0f, 0.0f,  100.0f);
-			glVertex3f( 100.0f, 0.0f, -100.0f);
+			glVertex3f(-15.5f, 0.0f, -14.0f);
+			glVertex3f(-15.5f, 0.0f,  14.0f);
+			glVertex3f(15.5f, 0.0f, 14.0f);
+			glVertex3f(15.5f, 0.0f,  -14.0f);
 		glEnd();
 
 	// create ghosts
-	for(int i=-3; i < 3; i++) {
-		glPushMatrix();
-		glTranslatef(i*10.0f, 0.0f, 10.0f);
-		drawGhost();
-		glPopMatrix();
+//	for(int i=-3; i < 3; i++) {
+//		glPushMatrix();
+//		glTranslatef(i*3.0f, 0.0f, 3.0f);
+//		drawGhost();
+//		glPopMatrix();
+//	}
+
+	//testing purposes only
+
+	/* LIGHTING */
+    glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, amb0);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff0);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, spec0);
+	glLightfv(GL_LIGHT1, GL_POSITION, light1_pos);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, amb1);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, diff1);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, spec1);
+	
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_turq);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_turq);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_turq);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_turq);
+	
+	//create map
+	for (int i = 0; i < wallMap.size(); i++)
+	{
+		for (int j = 0; j < wallMap.at(0).size(); j++)
+		{
+			glPushMatrix();
+			glTranslatef(i-15.5,0,j-14);
+			if (wallMap.at(i).at(j) == 1)
+			{
+				glutSolidCube(1);
+			}
+			glPopMatrix();	
+		}
 	}
 }
 
@@ -331,8 +448,18 @@ void mouseMove(int x, int y) {
 
 void init() {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
+    glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
+	glFrontFace(GL_CCW);
+	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_COLOR_MATERIAL);
+	glColorMaterial(GL_FRONT, GL_DIFFUSE);
+	
+	//quick lighting, testing purposes only
+	glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 
 	// register callbacks
 	glutIgnoreKeyRepeat(1);
@@ -344,7 +471,8 @@ void init() {
 }
 
 int main(int argc, char **argv) {
-
+	
+	LoadPPM("map.ppm", &width, &height, &maximum);
 	// init GLUT and create main window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
