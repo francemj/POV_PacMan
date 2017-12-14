@@ -46,7 +46,9 @@ int winBorder = 6;
 int width, height, maximum;
 GLubyte* image;
 //std::vector<std::vector<float>> wallMap;
-float wallArray [28][31];
+const int first = 28;
+const int second = 31;
+float wallArray[first][second];
 
 //this material is not needed, testing purposes only
 float amb_floor[4] = {0.2,0.2,0.2,1};
@@ -297,9 +299,9 @@ void renderShapes() {
 	glMaterialf(GL_FRONT, GL_SHININESS, shine_turq);
 	
 	//create map
-	for (int i = 0; i < sizeof(sizeof(wallArray)/sizeof(wallArray[0])); i++)
+	for (int i = 0; i < first; i++)
 	{
-		for (int j = 0; j < sizeof(wallArray[0]); j++)
+		for (int j = 0; j < second; j++)
 		{
 			glPushMatrix();
 			glTranslatef(i-15.5,0,j-14);
