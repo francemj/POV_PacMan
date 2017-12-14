@@ -355,7 +355,7 @@ void renderTopWin() {
 	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
 	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
-	glutSolidSphere(0.2, 4, 4);
+	glutSolidSphere(0.2, 30, 30);
 	glPopMatrix();
 
 	renderShapes();
@@ -366,7 +366,7 @@ void renderSideWin() {
 	glutSetWindow(sideWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(x-mZ*10, y, z+mX*10, x, y, z, 0.0f, 1.0f, 0.0f);
+	gluLookAt(x-mZ, y, z+mX, x, y, z, 0.0f, 1.0f, 0.0f);
 
 	// create yellow circle
 	glPushMatrix();
@@ -375,7 +375,7 @@ void renderSideWin() {
 	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
 	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
-	glutSolidSphere(0.2, 4, 4);
+	glutSolidSphere(0.2, 30, 30);
 	glPopMatrix();
 
 	renderShapes();
