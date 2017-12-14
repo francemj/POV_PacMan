@@ -484,8 +484,8 @@ int main(int argc, char **argv) {
 	// init GLUT and create main window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowPosition(50,50);
-	glutInitWindowSize(600,600);
+	glutInitWindowPosition(0,0);
+	glutInitWindowSize(800,800);
 	mainWin = glutCreateWindow("PacMan 3D");
 
 	// callbacks for main window
