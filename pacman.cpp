@@ -36,7 +36,7 @@ int winWidth;
 
 // computer framerate
 int frame;
-long time, timebase;
+long currtime, timebase;
 char s[50];
 
 int mainWin, gameWin, topWin, sideWin, scoreWin;
@@ -388,11 +388,11 @@ void renderScoreWin() {
 	glLoadIdentity();
 	frame++;
 
-	time=glutGet(GLUT_ELAPSED_TIME);
-	if (time - timebase > 1000) {
+	currtime=glutGet(GLUT_ELAPSED_TIME);
+	if (currtime - timebase > 1000) {
 		sprintf(s,"PacMan FPS:%4.2f",
-			frame*1000.0/(time-timebase));
-		timebase = time;
+			frame*1000.0/(currtime-timebase));
+		timebase = currtime;
 		frame = 0;
 	}
 
