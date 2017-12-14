@@ -39,8 +39,9 @@ int frame;
 long currtime, timebase;
 char s[50];
 
-int mainWin, gameWin, topWin, sideWin, scoreWin;
+int mainWin, introWin, gameWin, topWin, sideWin, scoreWin;
 int winBorder = 6;
+bool isStarted = false;
 
 //Map Generation
 int width, height, maximum;
@@ -163,6 +164,10 @@ void resize(int width, int height) {
 
 	winWidth = width;
 	winHeight = height;
+	glutSetWindow(introWin);
+	glutPositionWindow(winBorder, winBorder);
+	glutReshapeWindow((winWidth-winBorder), (winHeight-winBorder));
+	setProjection((winWidth-winBorder), (winHeight-winBorder));
 
 	glutSetWindow(gameWin);
 	glutPositionWindow(winBorder,winBorder);
@@ -170,14 +175,11 @@ void resize(int width, int height) {
 	setProjection(2*(winWidth/3.0) - 2*winBorder, winHeight - winBorder*3/2);
 
 	glutSetWindow(topWin);
-	// resize and reposition the sub window
 	glutPositionWindow(2*(winWidth/3.0) + winBorder/2, winBorder);
 	glutReshapeWindow(winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
 	setProjection(winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
 
-	// set subwindow 3 as the active window
 	glutSetWindow(sideWin);
-	// resize and reposition the sub window
 	glutPositionWindow(2*(winWidth/3.0) + winBorder/2, (winHeight/3.0) + winBorder/2);
 	glutReshapeWindow(winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
 	setProjection(winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
@@ -186,6 +188,7 @@ void resize(int width, int height) {
 	glutPositionWindow(2*(winWidth/3.0) + winBorder/2, 2*(winHeight/3.0) + winBorder/2);
 	glutReshapeWindow(winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
 	setProjection(winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
+
 
 }
 
@@ -224,35 +227,17 @@ void drawGhost() {
 }
 
 // create a string using glut
-void renderBitmapString(
-	float x,
-	float y,
-	float z,
+void renderStrokeString(
 	void *font,
 	char *string
 	) {
 	char *c;
-	glRasterPos3f(x,y,z);
-	for(c=string; *c != '\0'; c++) {
-		glutBitmapCharacter(font, *c);
+	for (c=string; *c != '\0'; c++) {
+		glutStrokeCharacter(font, *c);
 	}
 }
 
-void switchPerspectiveProj() {
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-}
 
-void switchOrthographicProj() {
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glPushMatrix();
-	glLoadIdentity();
-	gluOrtho2D(0, winWidth, winHeight, 0);
-	glMatrixMode(GL_MODELVIEW);
-}
 
 void updatePosition(float movement){
 	x += movement *0.1f*mX;
@@ -321,6 +306,23 @@ void renderMainWin() {
 	glutSwapBuffers();
 }
 
+void renderIntroWin() {
+	glutSetWindow(introWin);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glLoadIdentity();
+	gluLookAt(x, y, z, x ,y ,z, 0.0f,1.0f,0.0f);
+
+	// create yellow cube
+	glPushMatrix();
+	glColor3f(1.0, 1.0, 0.0);
+	glTranslatef(x,y,z);
+	glutSolidCube(2);
+	glPopMatrix();
+
+	glutSwapBuffers();
+}
+
 void renderGameWin() {
 	glutSetWindow(gameWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -346,7 +348,8 @@ void renderTopWin() {
 	glutSetWindow(topWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(x, y + 15, z, x,y - 1,z, mX, 0.0f, mZ);
+	// change y + 90 to whatever value for height change
+	gluLookAt(x, y + 90, z, x,y - 1,z, mX, 0.0f, mZ);
 
 	// create yellow circle
 	glPushMatrix();
@@ -382,10 +385,35 @@ void renderSideWin() {
 	glutSwapBuffers();
 }
 
+void switchPerspectiveProj() {
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void switchOrthographicProj() {
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0.0, winWidth, 1.0, winHeight, -10.0, 10.0);
+	glMatrixMode(GL_MODELVIEW);
+}
+
 void renderScoreWin() {
 	glutSetWindow(scoreWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
+		
+	gluLookAt(x, y + 15, z, x,y ,z, mX, 0.0f, mZ);
+	// create yellow circle
+	glPushMatrix();
+	glColor3f(1.0, 1.0, 0.0);
+	
+	glTranslatef(x,y,z);
+	glScalef(2,2,2);
+	glRotatef(130,1,1,1);
+	glutSolidCube(1);
+
 	frame++;
 
 	currtime=glutGet(GLUT_ELAPSED_TIME);
@@ -400,7 +428,10 @@ void renderScoreWin() {
 
 	glPushMatrix();
 	glLoadIdentity();
-	renderBitmapString(5,30,0,GLUT_BITMAP_HELVETICA_12,s);
+	glColor3f(1.0,0,1.0);
+	glTranslatef(10,10,0);
+	glScalef(0.4,0.4,0.4);
+	renderStrokeString(GLUT_STROKE_ROMAN,s);
 	glPopMatrix();
 
 	switchPerspectiveProj();
@@ -415,33 +446,55 @@ void renderScoreWin() {
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
 
-	renderShapes();
+
+	// glPopMatrix();
+	// // glPushMatrix();
+	// // glLoadIdentity();
+	// glTranslatef(100.0, 50.0, 1.0);
+	// glRotatef(30, 1.0, 0, 0);
+	// glColor3f(0,1.0,0);
+	// glutSolidCube(50);
+	// glPopMatrix();
+
 	glutSwapBuffers();
 }
 
 void setScene() {
-	if (dMove) {
+	if (dMove || isStarted) {
 		updatePosition(dMove);
 		glutSetWindow(mainWin);
 		glutPostRedisplay();
 	}
-
-	renderGameWin();
-	renderTopWin();
-	renderSideWin();
-	renderScoreWin();
+	if (isStarted) {
+		renderGameWin();
+		renderTopWin();
+		renderSideWin();
+		renderScoreWin();
+	} else {
+		renderIntroWin();
+	}
+	
 }
 
 void keyboard(unsigned char key, int xIn, int yIn) {
 	switch (key) {
-
-		case 27: {
-			glutDestroyWindow(mainWin);
-			exit(0);
-			break;
+		case 'q': {
+			exit(0); break;
+		}
+		case 's': {
+			if (!isStarted) {
+				// glutDestroyWindow(introWin);
+				glutSetWindow(introWin);
+				glutHideWindow();
+			} else {
+				glutSetWindow(introWin);
+				glutShowWindow();
+			}
+			isStarted = !isStarted;
+			glutSetWindow(mainWin);
 		}
 	}
-	glutPostRedisplay();
+	// glutPostRedisplay();
 }
 
 void dSpecialKeyboard(int key, int xIn, int yIn) {
@@ -463,13 +516,12 @@ void uSpecialKeyboard(int key, int xIn, int yIn) {
 
 void mouseButton(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON) {
-
 		// onClick UP
 		if (state == GLUT_UP) {
 			
 		}
 		else  { // onClick DOWN
-
+			// printf("x,y,z: %f,%f,%f", mX,y,mZ);
 		}
 	}
 }
@@ -478,13 +530,15 @@ void mouseMotion(int x, int y){
 }
 
 void mouseMove(int x, int y) {
-	dAngle = (x - dX) * 0.010f;
+	if (isStarted) {
+		dAngle = (x - dX) * 0.010f;
 
-	mX = sin(angle + dAngle);
-	mZ = -cos(angle + dAngle);
+		mX = sin(angle + dAngle);
+		mZ = -cos(angle + dAngle);
 
-	glutSetWindow(mainWin);
-	glutPostRedisplay();
+		glutSetWindow(mainWin);
+		glutPostRedisplay();
+	}
 }
 
 
@@ -544,6 +598,10 @@ int main(int argc, char **argv) {
 
 	scoreWin = glutCreateSubWindow(mainWin, 2*(winWidth/3.0) + winBorder/2, 2*(winHeight/3.0) + winBorder/2, winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
 	glutDisplayFunc(renderScoreWin);
+	init();
+
+	introWin = glutCreateSubWindow(mainWin, winBorder,winBorder,(winWidth-winBorder), (winHeight-winBorder));
+	glutDisplayFunc(renderIntroWin);
 	init();
 
 	// enter GLUT event processing cycle
