@@ -23,7 +23,7 @@ float mY=0.0f;
 
 // hold xz camera
 float x=0.0f;
-float z=5.0f;
+float z=0.0f;
 float y=0.0f;
 
 // key states
@@ -49,6 +49,11 @@ GLubyte* image;
 vector<vector<float>> wallMap;
 
 //this material is not needed, testing purposes only
+float amb_floor[4] = {0.2,0.2,0.2,1};
+float diff_floor[4] = {0.8,0.8,0.8,1};
+float spec_floor[4] = {0.0,0.0,0.0,0.1};
+float shine_floor = 0;
+
 float amb_turq[4] ={ 0.1f, 0.18725f, 0.1745f, 0.8f };
 float diff_turq[4] ={0.396f, 0.74151f, 0.69102f, 0.8f };
 float spec_turq[4] ={0.297254f, 0.30829f, 0.306678f, 0.8f };
@@ -233,14 +238,17 @@ void updatePosition(float movement){
 }
 
 void renderShapes() {
-	// create 100x100 grey background for ground
-	glColor3f(0.9f, 0.9f, 0.9f);
-		glBegin(GL_QUADS);
-			glVertex3f(-15.5f, 0.0f, -14.0f);
-			glVertex3f(-15.5f, 0.0f,  14.0f);
-			glVertex3f(15.5f, 0.0f, 14.0f);
-			glVertex3f(15.5f, 0.0f,  -14.0f);
-		glEnd();
+	//Ground Plane
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_floor);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_floor);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_floor);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_floor);
+	glPushMatrix();
+	glTranslatef(0,-0.5,0);
+	glColor3f(0,0,0); //color of floor
+	glScalef(31,1,28); //size of floor
+	glutSolidCube(1);
+	glPopMatrix();
 
 	// create ghosts
 //	for(int i=-3; i < 3; i++) {
@@ -275,7 +283,7 @@ void renderShapes() {
 		{
 			glPushMatrix();
 			glTranslatef(i-15.5,0,j-14);
-			if (wallMap.at(i).at(j) == 1)
+			if (wallMap.at(i).at(j) == 255)
 			{
 				glutSolidCube(1);
 			}
@@ -476,8 +484,8 @@ int main(int argc, char **argv) {
 	// init GLUT and create main window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowPosition(100,100);
-	glutInitWindowSize(800,800);
+	glutInitWindowPosition(50,50);
+	glutInitWindowSize(600,600);
 	mainWin = glutCreateWindow("PacMan 3D");
 
 	// callbacks for main window

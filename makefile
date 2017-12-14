@@ -14,7 +14,7 @@ RM=rm
 # Windows (cygwin)
 ifeq "$(OS)" "Windows_NT"
 	EXEEXT=.exe #on windows applications must have .exe extension
-	RM=del #rm command for windows powershell
+	RM=rm #rm command for windows powershell
     LDFLAGS = -lfreeglut -lglu32 -lopengl32
 else
 	# OS X
