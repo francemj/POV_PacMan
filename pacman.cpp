@@ -24,6 +24,9 @@ float mY=0.0f;
 float x=0.0f;
 float z=0.0f;
 float y=0.0f;
+float textX=0.0f;
+float textY=0.0f;
+float textZ=0.0f;
 
 // key states
 float dAngle=0.0f;
@@ -233,6 +236,7 @@ void renderStrokeString(
 	) {
 	char *c;
 	for (c=string; *c != '\0'; c++) {
+
 		glutStrokeCharacter(font, *c);
 	}
 }
@@ -306,20 +310,52 @@ void renderMainWin() {
 	glutSwapBuffers();
 }
 
+void switchPerspectiveProj() {
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void switchOrthographicProj() {
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0.0, winWidth, 1.0, winHeight, -10.0, 10.0);
+	glMatrixMode(GL_MODELVIEW);
+}
+
 void renderIntroWin() {
 	glutSetWindow(introWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
-	gluLookAt(x, y, z, x ,y ,z, 0.0f,1.0f,0.0f);
+	gluLookAt(textX, textY + 20, textZ, textX, textY, textZ, 1,0.0f,0);
 
-	// create yellow cube
+	switchOrthographicProj();
+	s[0] = 's';
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
-	glTranslatef(x,y,z);
-	glutSolidCube(2);
+	glLoadIdentity();
+	glColor3f(0.0,0,0.0);
+	glTranslatef(15,15,0);
+	glScalef(0.4,0.4,0.4);
+	renderStrokeString(GLUT_STROKE_ROMAN,s);
 	glPopMatrix();
 
+	switchPerspectiveProj();
+	
+	// create yellow cube
+	glPushMatrix();
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
+	glScalef(5, 1, 20);
+	glTranslatef(textX-1,textY,textZ);
+	glColor3f(1,0,0);
+	glutSolidCube(1);
+	glTranslatef(2, 0, 0);
+	glutSolidCube(1);
+	glPopMatrix();
 	glutSwapBuffers();
 }
 
@@ -349,7 +385,8 @@ void renderTopWin() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 	// change y + 90 to whatever value for height change
-	gluLookAt(x, y + 90, z, x,y - 1,z, mX, 0.0f, mZ);
+	gluLookAt(x, y + 20, z, x,y - 1,z, 1, 0.0f, 0);
+
 
 	// create yellow circle
 	glPushMatrix();
@@ -358,7 +395,7 @@ void renderTopWin() {
 	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
 	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
-	glutSolidSphere(0.2, 30, 30);
+	glutSolidSphere(0.3, 30, 30);
 	glPopMatrix();
 
 	renderShapes();
@@ -385,19 +422,7 @@ void renderSideWin() {
 	glutSwapBuffers();
 }
 
-void switchPerspectiveProj() {
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-}
 
-void switchOrthographicProj() {
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glOrtho(0.0, winWidth, 1.0, winHeight, -10.0, 10.0);
-	glMatrixMode(GL_MODELVIEW);
-}
 
 void renderScoreWin() {
 	glutSetWindow(scoreWin);
@@ -428,7 +453,7 @@ void renderScoreWin() {
 
 	glPushMatrix();
 	glLoadIdentity();
-	glColor3f(1.0,0,1.0);
+	glColor3f(0.0,0,0.0);
 	glTranslatef(10,10,0);
 	glScalef(0.4,0.4,0.4);
 	renderStrokeString(GLUT_STROKE_ROMAN,s);
