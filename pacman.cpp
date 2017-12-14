@@ -61,6 +61,16 @@ float amb_gold[4] ={ 0.24725f, 0.1995f, 0.0745f, 1.0f };
 float diff_gold[4] ={0.75164f, 0.60648f, 0.22648f, 1.0f };
 float spec_gold[4] ={0.628281f, 0.555802f, 0.366065f, 1.0f };
 float shine_gold =51.2f ;
+float amb_white[4] ={ 0.05f,0.05f,0.05f,1.0f };
+float diff_white[4] ={ 0.5f,0.5f,0.5f,1.0f};
+float spec_white[4] ={ 0.7f,0.7f,0.7f,1.0f};
+float shine_white = 10.0f;
+float amb_red[4] ={ 0.05f,0.0f,0.0f,1.0f };
+float diff_red[4] ={ 0.5f,0.4f,0.4f,1.0f};
+float spec_red[4] ={ 0.7f,0.04f,0.04f,1.0f};
+float shine_red = 10.0f;
+
+
 
 //testing purposes only
 /* LIGHTING */
@@ -177,31 +187,36 @@ void resize(int width, int height) {
 
 void drawGhost() {
 
-	glColor3f(1.0f, 0.0f, 0.0f);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_red);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_red);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_red);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_red);
 
 	// cylinder body using quadric object
-	glTranslatef(0.0f, 0.75f, 0.0f);
+	glTranslatef(0.0f, 0.0f, 0.0f);
 	glRotatef(-90, 1.0, 0.0, 0.0);
 	GLUquadricObj *quadObj;
 	quadObj = gluNewQuadric();
 	gluQuadricDrawStyle(quadObj, GLU_FILL);
 	gluQuadricNormals(quadObj, GLU_SMOOTH);
-	gluCylinder(quadObj, 0.6, 0.6, 1.2, 40, 6);
+	gluCylinder(quadObj, 0.25, 0.25, 1.2, 40, 6);
 	glRotatef(90, 1.0, 0.0, 0.0);
 
 	// head
 	glTranslatef(0.0f, 1.2f, 0.0f);
-	glutSolidSphere(0.6f,20,20);
+	glutSolidSphere(0.25f,20,20);
 
 	// eyes
 	glPushMatrix();
-	glColor3f(1.0f,1.0f,1.0f);
-	glTranslatef(0.1f, 0.10f, 0.6f);
-	glutSolidSphere(0.05f,10,10);
-	glTranslatef(-0.2f, 0.0f, 0.0f);
-	glutSolidSphere(0.05f,10,10);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_white);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_white);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_white);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_white);
+	glTranslatef(-0.2f, 0.10f, 0.1f);
+	glutSolidSphere(0.03f,10,10);
+	glTranslatef(0.0f, 0.0f, -0.2f);
+	glutSolidSphere(0.03f,10,10);
 	glPopMatrix();
-	glColor3f(1.0f, 1.0f, 1.0f);
 }
 
 // create a string using glut
@@ -254,12 +269,12 @@ void renderShapes() {
 	glPopMatrix();
 
 	// create ghosts
-//	for(int i=-3; i < 3; i++) {
-//		glPushMatrix();
-//		glTranslatef(i*3.0f, 0.0f, 3.0f);
-//		drawGhost();
-//		glPopMatrix();
-//	}
+	for(int i=-3; i < 3; i++) {
+		glPushMatrix();
+		glTranslatef(-1.0f, -1.0f, i);
+		drawGhost();
+		glPopMatrix();
+	}
 
 	//testing purposes only
 
