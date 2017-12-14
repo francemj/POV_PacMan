@@ -268,7 +268,7 @@ void renderShapes() {
 	glPushMatrix();
 	glTranslatef(0,-1,0);
 	glColor3f(0,0,0); //color of floor
-	glScalef(31,1,28); //size of floor
+	glScalef(32,1,29); //size of floor
 	glutSolidCube(1);
 	glPopMatrix();
 
