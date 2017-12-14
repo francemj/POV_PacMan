@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <vector>
-using namespace std;
 
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>
@@ -46,7 +45,7 @@ int winBorder = 6;
 //Map Generation
 int width, height, maximum;
 GLubyte* image;
-vector<vector<float>> wallMap;
+std::vector<std::vector<float>> wallMap;
 
 //this material is not needed, testing purposes only
 float amb_floor[4] = {0.2,0.2,0.2,1};
@@ -123,7 +122,7 @@ GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
     img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
     s=255.0/k;
     
-	vector<float> tempVec;
+	std::vector<float> tempVec;
     /* for every pixel, grab the read green and blue values, storing them in the image data array */
     for(i=0;i<nm;i++)
     {
