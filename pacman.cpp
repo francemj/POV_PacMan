@@ -21,8 +21,8 @@ float mZ=-1.0f;
 float mY=0.0f;
 
 // hold xz camera
-float x=0.0f;
-float z=0.0f;
+float x=7.5f;
+float z=-0.5f;
 float y=0.0f;
 
 // key states
@@ -46,8 +46,8 @@ int winBorder = 6;
 int width, height, maximum;
 GLubyte* image;
 //std::vector<std::vector<float>> wallMap;
-const int first = 28;
-const int second = 31;
+const int first = 31;
+const int second = 28;
 float wallArray[first][second];
 
 //this material is not needed, testing purposes only
@@ -266,9 +266,9 @@ void renderShapes() {
 	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_floor);
 	glMaterialf(GL_FRONT, GL_SHININESS, shine_floor);
 	glPushMatrix();
-	glTranslatef(0,-1,0);
+	glTranslatef(-0.5,-1,-0.5);
 	glColor3f(0,0,0); //color of floor
-	glScalef(32,1,29); //size of floor
+	glScalef(31,1,28); //size of floor
 	glutSolidCube(1);
 	glPopMatrix();
 
@@ -515,8 +515,6 @@ void init() {
 int main(int argc, char **argv) {
 	
 	LoadPPM("map.ppm", &width, &height, &maximum);
-	printf("%d\n", sizeof(wallArray)/sizeof(wallArray[0]));
-	printf("%d\n", sizeof(wallArray[0]));
 	// init GLUT and create main window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
