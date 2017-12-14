@@ -135,12 +135,12 @@ void setPowerUpColour() {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
 }
 
-void setRedGlow() {
-	glow_em[0] = 1; 
-	glow_em[1] = 0; 
-	glow_em[2] = 0; 
-	glow_em[3] = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+void setRed() {
+	glow_dif[0] = 1; 
+	glow_dif[1] = 0; 
+	glow_dif[2] = 0; 
+	glow_dif[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
 }
 
 void setGroundColour() {
@@ -196,12 +196,35 @@ void drawPowerUps() {
 }
 
 void drawPacMan() {
-	glutSolidSphere(0.5, 10, 10);
+	glPushMatrix();
+		setPacManColour();
+		glTranslatef(x,y,z);
+		glutSolidSphere(0.5, 10, 10);
+		resetLightingProperties();
+
+		// Eyes
+	/*	glRotatef(20, 0, 1, 0);
+		glPushMatrix();
+			setBlack();
+			glTranslatef(0.4, 0.1, 0);
+			glutSolidSphere(0.125,10,10);
+		glPopMatrix();
+		glRotatef(-40, 0, 1, 0);
+		glPushMatrix();
+			setBlack();
+			glTranslatef(0.4, 0.1, 0);
+			glutSolidSphere(0.125,10,10);
+		glPopMatrix();
+		glRotatef(20, 0, 1, 0);
+		resetLightingProperties();*/
+
+	glPopMatrix();
 }
 
 void drawGhost() {
 
-	setGhostColour();
+	// setGhostColour();
+	setRed();
 
 	// cylinder body using quadric object
 	glTranslatef(0.0f, 0.75f, 0.0f);
@@ -319,13 +342,8 @@ void renderGameWin() {
 	glLoadIdentity();
 	gluLookAt(x, y, z, x + mX,y + mY,z + mZ, 0.0f,1.0f,0.0f);
 
-	// create yellow circle
-	glPushMatrix();
-		setPacManColour();
-		glTranslatef(x,y,z);
-		drawPacMan();
-		resetLightingProperties();
-	glPopMatrix();
+	// create PacMan
+	// drawPacMan();
 
 	renderShapes();
 	glutSwapBuffers();
@@ -337,13 +355,8 @@ void renderTopWin() {
 	glLoadIdentity();
 	gluLookAt(x, y + 15, z, x,y - 1,z, mX, 0.0f, mZ);
 
-	// create yellow circle
-	glPushMatrix();
-		setPacManColour();
-		glTranslatef(x,y,z);
-		drawPacMan();
-		resetLightingProperties();
-	glPopMatrix();
+	// create PacMan
+	drawPacMan();
 
 	renderShapes();
 	glutSwapBuffers();
@@ -355,13 +368,8 @@ void renderSideWin() {
 	glLoadIdentity();
 	gluLookAt(x-mZ*10, y, z+mX*10, x, y, z, 0.0f, 1.0f, 0.0f);
 
-	// create yellow circle
-	glPushMatrix();
-		setPacManColour();
-		glTranslatef(x,y,z);
-		drawPacMan();
-		resetLightingProperties();
-	glPopMatrix();
+	// create PacMan
+	drawPacMan();
 
 	renderShapes();
 	glutSwapBuffers();
@@ -390,13 +398,8 @@ void renderScoreWin() {
 
 	switchPerspectiveProj();
 
-	// create yellow circle
-	glPushMatrix();
-		setPacManColour();
-		glTranslatef(x,y,z);
-		drawPacMan();
-		resetLightingProperties();
-	glPopMatrix();
+	// create PacMan
+	drawPacMan();
 
 	renderShapes();
 	glutSwapBuffers();
