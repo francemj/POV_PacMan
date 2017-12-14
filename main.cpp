@@ -31,6 +31,15 @@ int frame;
 long time, timebase;
 char s[50];
 
+// Light Position
+float pos[4] = {x,0,z,0};
+
+float glow_amb[] = {0.1f, 0, 0.1f, 1.0};
+float glow_dif[] = {1, 0, 0, 1.0};
+float glow_spec[] = {0.1f, 0.1f, 0.1f, 1.0};
+float glow_em[] = {0,0,0,0.5f};
+float shiny = 5; //10, 100
+
 // variables to hold window identifiers
 int mainWindow, subWindow1,subWindow2,subWindow3;
 //border between subwindows
@@ -85,9 +94,93 @@ void changeSize(int w1,int h1) {
 	setProjection(w/2-border*3/2,h/2 - border*3/2);
 }
 
+// 	**********************************
+// 			Lighting Functions
+// 	**********************************
+
+void resetLightingProperties() {
+
+	glow_dif[0] = 0;
+	glow_dif[1] = 0;
+	glow_dif[2] = 1;
+	glow_dif[3] = 1;
+
+	for(int i = 0; i < 4; i++){
+		glow_em[i] = 0; 
+	}
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setBlack(){
+	for(int i = 0; i < 4; i++){
+		glow_dif[i] = 0; 
+	}
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+}
+
+void setPacDotsColour() {
+	glow_em[0] = 1; 
+	glow_em[1] = 1; 
+	glow_em[2] = 0; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setPowerUpColour() {
+	glow_em[0] = 1; 
+	glow_em[1] = 0; 
+	glow_em[2] = 1; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setRed() {
+	glow_em[0] = 1; 
+	glow_em[1] = 0; 
+	glow_em[2] = 0; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setBlue() {
+	glow_em[0] = 0; 
+	glow_em[1] = 0; 
+	glow_em[2] = 1; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+// 	***************************
+// 			Dots Models
+// 	***************************
+
+void drawPacDots() {
+	glPushMatrix();
+		setPacDotsColour();
+		glTranslatef(0,1.5f,0);
+		glutSolidSphere(0.25,50,50);
+		resetLightingProperties();
+	glPopMatrix();
+}
+
+void drawPowerUps() {
+	glPushMatrix();
+		setPowerUpColour();
+		glTranslatef(0,1.5f,0);
+		glutSolidSphere(0.5,50,50);
+		resetLightingProperties();
+	glPopMatrix();
+}
+
 void drawSnowMan() {
 
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glow_dif[0] = 1; 
+	glow_dif[1] = 1; 
+	glow_dif[2] = 1; 
+	glow_dif[3] = 0;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
 
 // Draw Body
 	glTranslatef(0.0f ,0.75f, 0.0f);
@@ -107,19 +200,13 @@ void drawSnowMan() {
 
 // Draw Eyes
 	glPushMatrix();
+	setBlack();
 	glColor3f(0.0f,0.0f,0.0f);
 	glTranslatef(0.1f, 0.10f, 0.6f);
 	glutSolidSphere(0.05f,10,10);
 	glTranslatef(-0.2f, 0.0f, 0.0f);
 	glutSolidSphere(0.05f,10,10);
 	glPopMatrix();
-
-// Draw Nose
-	glColor3f(1.0f, 0.5f, 0.5f);
-	glRotatef(0.0f,1.0f, 0.0f, 0.0f);
-	glutSolidCone(0.08f,0.5f,10,2);
-
-	glColor3f(1.0f, 1.0f, 1.0f);
 
 }
 
@@ -177,13 +264,14 @@ void renderScene2() {
 
 // Draw ground
 
-	glColor3f(0.9f, 0.9f, 0.9f);
+	setBlue();
 	glBegin(GL_QUADS);
 		glVertex3f(-100.0f, 0.0f, -100.0f);
 		glVertex3f(-100.0f, 0.0f,  100.0f);
 		glVertex3f( 100.0f, 0.0f,  100.0f);
 		glVertex3f( 100.0f, 0.0f, -100.0f);
 	glEnd();
+	resetLightingProperties();
 
 // Draw 36 SnowMen
 	for(int i = -3; i < 3; i++)
@@ -192,6 +280,24 @@ void renderScene2() {
 			glPushMatrix();
 			glTranslatef(i*10.0f, 0.0f, j * 10.0f);
 			drawSnowMan();
+			glPopMatrix();
+		}
+
+	for(int i = -3; i < 3; i++)
+		for(int j=-3; j < 3; j++)
+		{
+			glPushMatrix();
+			glTranslatef(i*10.0f+5, 0.0f, j * 10.0f+5);
+			drawPacDots();
+			glPopMatrix();
+		}
+
+	for(int i = -3; i < 3; i++)
+		for(int j=-3; j < 3; j++)
+		{
+			glPushMatrix();
+			glTranslatef(i*10.0f, 0.0f, j*10.0f+5);
+			drawPowerUps();
 			glPopMatrix();
 		}
 }
@@ -254,11 +360,12 @@ void renderScenesw2() {
 
 	// Draw red cone at the location of the main camera
 	glPushMatrix();
-	glColor3f(1.0,0.0,0.0);
+	setRed();
 	glTranslatef(x,y,z);
 	glRotatef(180-(angle+deltaAngle)*180.0/3.14,0.0,1.0,0.0);
 	glutSolidCone(0.2,0.8f,4,4);
 	glPopMatrix();
+	resetLightingProperties();
 
 	renderScene2();
 
@@ -279,11 +386,12 @@ void renderScenesw3() {
 
 	// Draw red cone at the location of the main camera
 	glPushMatrix();
-	glColor3f(1.0,0.0,0.0);
+	setRed();
 	glTranslatef(x,y,z);
 	glRotatef(180-(angle+deltaAngle)*180.0/3.14,0.0,1.0,0.0);
 	glutSolidCone(0.2,0.8f,4,4);
 	glPopMatrix();
+	resetLightingProperties();
 
 	renderScene2();
 
@@ -385,6 +493,16 @@ void init() {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+
+	glLightfv(GL_LIGHT0, GL_POSITION, pos);
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, glow_spec);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
 
 	// register callbacks
 	glutIgnoreKeyRepeat(1);
