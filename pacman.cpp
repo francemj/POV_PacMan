@@ -53,11 +53,14 @@ float amb_floor[4] = {0.2,0.2,0.2,1};
 float diff_floor[4] = {0.8,0.8,0.8,1};
 float spec_floor[4] = {0.0,0.0,0.0,0.1};
 float shine_floor = 0;
-
 float amb_turq[4] ={ 0.1f, 0.18725f, 0.1745f, 0.8f };
 float diff_turq[4] ={0.396f, 0.74151f, 0.69102f, 0.8f };
 float spec_turq[4] ={0.297254f, 0.30829f, 0.306678f, 0.8f };
 float shine_turq = 12.8f;
+float amb_gold[4] ={ 0.24725f, 0.1995f, 0.0745f, 1.0f };
+float diff_gold[4] ={0.75164f, 0.60648f, 0.22648f, 1.0f };
+float spec_gold[4] ={0.628281f, 0.555802f, 0.366065f, 1.0f };
+float shine_gold =51.2f ;
 
 //testing purposes only
 /* LIGHTING */
@@ -244,7 +247,7 @@ void renderShapes() {
 	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_floor);
 	glMaterialf(GL_FRONT, GL_SHININESS, shine_floor);
 	glPushMatrix();
-	glTranslatef(0,-0.5,0);
+	glTranslatef(0,-1,0);
 	glColor3f(0,0,0); //color of floor
 	glScalef(31,1,28); //size of floor
 	glutSolidCube(1);
@@ -308,7 +311,10 @@ void renderGameWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
@@ -325,7 +331,10 @@ void renderTopWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
@@ -342,7 +351,10 @@ void renderSideWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
@@ -376,7 +388,10 @@ void renderScoreWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
