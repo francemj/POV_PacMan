@@ -45,7 +45,8 @@ int winBorder = 6;
 //Map Generation
 int width, height, maximum;
 GLubyte* image;
-std::vector<std::vector<float>> wallMap;
+//std::vector<std::vector<float>> wallMap;
+float wallArray [28][31];
 
 //this material is not needed, testing purposes only
 float amb_floor[4] = {0.2,0.2,0.2,1};
@@ -121,19 +122,21 @@ GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
     nm = n*m;
     img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
     s=255.0/k;
-    
-	std::vector<float> tempVec;
+	
+	//std::vector<float> tempVec;
     /* for every pixel, grab the read green and blue values, storing them in the image data array */
     for(i=0;i<nm;i++)
     {
-		tempVec.clear();
+//		tempVec.clear();
         fscanf(fd,"%d %d %d",&red, &green, &blue );
         img[3*nm-3*i-3]=red*s;
-		if (i%n == 0)
-		{
-			wallMap.push_back(tempVec);	
-		}
-		wallMap.at(floor(i/n)).push_back(red);
+//		if (i%n == 0)
+//		{
+//			wallMap.push_back(tempVec);	
+//		}
+//		wallMap.at(floor(i/n)).push_back(red);
+		wallArray[(int) floor(i/n)][i%n] = img[3*nm-3*i-3];
+//		printf("%d, %d, %d\n", (int) floor(i/n), i%n, wallMap.at(floor(i/n)).at(i%n));
     }
     
     /* finally, set the "return parameters" (width, height, maximum) and return the image array */
@@ -294,13 +297,13 @@ void renderShapes() {
 	glMaterialf(GL_FRONT, GL_SHININESS, shine_turq);
 	
 	//create map
-	for (int i = 0; i < wallMap.size(); i++)
+	for (int i = 0; i < sizeof(sizeof(wallArray)/sizeof(wallArray[0])); i++)
 	{
-		for (int j = 0; j < wallMap.at(0).size(); j++)
+		for (int j = 0; j < sizeof(wallArray[0]); j++)
 		{
 			glPushMatrix();
 			glTranslatef(i-15.5,0,j-14);
-			if (wallMap.at(i).at(j) == 255)
+			if (wallArray[i][j] == 255)
 			{
 				glutSolidCube(1);
 			}
@@ -510,6 +513,8 @@ void init() {
 int main(int argc, char **argv) {
 	
 	LoadPPM("map.ppm", &width, &height, &maximum);
+	printf("%d\n", sizeof(wallArray)/sizeof(wallArray[0]));
+	printf("%d\n", sizeof(wallArray[0]));
 	// init GLUT and create main window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
