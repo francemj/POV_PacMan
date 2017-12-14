@@ -26,9 +26,9 @@ float zL;
 float zR;
 
 // hold xz camera
-float x=0.0f;
-float z=5.0f;
-float y=1.75f;
+float x=7.5f;
+float z=-0.5f;
+float y=0.0f;
 
 // key states
 float dAngle=0.0f;
@@ -42,7 +42,7 @@ int winWidth;
 
 // computer framerate
 int frame;
-long time, timebase;
+long currtime, timebase;
 char s[50];
 
 //keyboard buttons array
@@ -50,6 +50,111 @@ bool keys[4];
 
 int mainWin, gameWin, topWin, sideWin, scoreWin;
 int winBorder = 6;
+
+//Map Generation
+int width, height, maximum;
+GLubyte* image;
+//std::vector<std::vector<float>> wallMap;
+const int first = 28;
+const int second = 31;
+float wallArray[first][second];
+
+//this material is not needed, testing purposes only
+float amb_floor[4] = {0.2,0.2,0.2,1};
+float diff_floor[4] = {0.8,0.8,0.8,1};
+float spec_floor[4] = {0.0,0.0,0.0,0.1};
+float shine_floor = 0;
+float amb_turq[4] ={ 0.1f, 0.18725f, 0.1745f, 0.8f };
+float diff_turq[4] ={0.396f, 0.74151f, 0.69102f, 0.8f };
+float spec_turq[4] ={0.297254f, 0.30829f, 0.306678f, 0.8f };
+float shine_turq = 12.8f;
+float amb_gold[4] ={ 0.24725f, 0.1995f, 0.0745f, 1.0f };
+float diff_gold[4] ={0.75164f, 0.60648f, 0.22648f, 1.0f };
+float spec_gold[4] ={0.628281f, 0.555802f, 0.366065f, 1.0f };
+float shine_gold =51.2f ;
+float amb_white[4] ={ 0.05f,0.05f,0.05f,1.0f };
+float diff_white[4] ={ 0.5f,0.5f,0.5f,1.0f};
+float spec_white[4] ={ 0.7f,0.7f,0.7f,1.0f};
+float shine_white = 10.0f;
+float amb_red[4] ={ 0.05f,0.0f,0.0f,1.0f };
+float diff_red[4] ={ 0.5f,0.4f,0.4f,1.0f};
+float spec_red[4] ={ 0.7f,0.04f,0.04f,1.0f};
+float shine_red = 10.0f;
+
+
+
+//testing purposes only
+/* LIGHTING */
+float light0_pos[] = {15.0, 15.0, -10.0, 1.0};
+float amb0[4] = {1, 1, 1, 1};
+float diff0[4] = {1, 1, 1, 1};
+float spec0[4] = {1, 1, 1, 1};
+float light1_pos[] = {10.0, 15.0, -10.0, 1.0};
+float amb1[4] = {1, 1, 1, 1};
+float diff1[4] = {1, 1, 1, 1};
+float spec1[4] = {1, 1, 1, 1};
+
+GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
+{
+    GLubyte* img;
+    FILE *fd;
+    int n, m;
+    int  k, nm;
+    char c;
+    int i;
+    char b[100];
+    float s;
+    int red, green, blue;
+    
+    /* first open file and check if it's an ASCII PPM (indicated by P3 at the start) */
+    fd = fopen(file, "r");
+    fscanf(fd,"%[^\n] ",b);
+    if(b[0]!='P'|| b[1] != '3')
+    {
+        printf("%s is not a PPM file!\n",file);
+        exit(0);
+    }
+    printf("%s is a PPM file\n", file);
+    fscanf(fd, "%c",&c);
+    
+    /* next, skip past the comments - any line starting with #*/
+    while(c == '#')
+    {
+        fscanf(fd, "%[^\n] ", b);
+        printf("%s\n",b);
+        fscanf(fd, "%c",&c);
+    }
+    ungetc(c,fd);
+    
+    /* now get the dimensions and maximum colour value from the image */
+    fscanf(fd, "%d %d %d", &n, &m, &k);
+    
+    /* calculate number of pixels and allocate storage for this */
+    nm = n*m;
+    img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
+    s=255.0/k;
+	
+	//std::vector<float> tempVec;
+    /* for every pixel, grab the read green and blue values, storing them in the image data array */
+    for(i=0;i<nm;i++)
+    {
+//		tempVec.clear();
+        fscanf(fd,"%d %d %d",&red, &green, &blue );
+        img[3*nm-3*i-3]=red*s;
+//		if (i%n == 0)
+//		{
+//			wallMap.push_back(tempVec);	
+//		}
+//		wallMap.at(floor(i/n)).push_back(red);
+		wallArray[(int) floor(i/n)][i%n] = img[3*nm-3*i-3];
+//		printf("%d, %d, %d\n", (int) floor(i/n), i%n, wallMap.at(floor(i/n)).at(i%n));
+    }
+    
+    /* finally, set the "return parameters" (width, height, maximum) and return the image array */
+    *width = n;
+    *height = m;
+    *maximum = k;
+}
 
 void setProjection(int width, int height) {
 	
@@ -95,31 +200,36 @@ void resize(int width, int height) {
 
 void drawGhost() {
 
-	glColor3f(1.0f, 0.0f, 0.0f);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_red);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_red);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_red);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_red);
 
 	// cylinder body using quadric object
-	glTranslatef(0.0f, 0.75f, 0.0f);
+	glTranslatef(0.0f, 0.0f, 0.0f);
 	glRotatef(-90, 1.0, 0.0, 0.0);
 	GLUquadricObj *quadObj;
 	quadObj = gluNewQuadric();
 	gluQuadricDrawStyle(quadObj, GLU_FILL);
 	gluQuadricNormals(quadObj, GLU_SMOOTH);
-	gluCylinder(quadObj, 0.6, 0.6, 1.2, 40, 6);
+	gluCylinder(quadObj, 0.25, 0.25, 1.2, 40, 6);
 	glRotatef(90, 1.0, 0.0, 0.0);
 
 	// head
 	glTranslatef(0.0f, 1.2f, 0.0f);
-	glutSolidSphere(0.6f,20,20);
+	glutSolidSphere(0.25f,20,20);
 
 	// eyes
 	glPushMatrix();
-	glColor3f(1.0f,1.0f,1.0f);
-	glTranslatef(0.1f, 0.10f, 0.6f);
-	glutSolidSphere(0.05f,10,10);
-	glTranslatef(-0.2f, 0.0f, 0.0f);
-	glutSolidSphere(0.05f,10,10);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_white);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_white);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_white);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_white);
+	glTranslatef(-0.2f, 0.10f, 0.1f);
+	glutSolidSphere(0.03f,10,10);
+	glTranslatef(0.0f, 0.0f, -0.2f);
+	glutSolidSphere(0.03f,10,10);
 	glPopMatrix();
-	glColor3f(1.0f, 1.0f, 1.0f);
 }
 
 // create a string using glut
@@ -166,21 +276,57 @@ void updatePositionLR(float movement){
 }
 
 void renderShapes() {
-	// create 100x100 grey background for ground
-	glColor3f(0.9f, 0.9f, 0.9f);
-		glBegin(GL_QUADS);
-			glVertex3f(-100.0f, 0.0f, -100.0f);
-			glVertex3f(-100.0f, 0.0f,  100.0f);
-			glVertex3f( 100.0f, 0.0f,  100.0f);
-			glVertex3f( 100.0f, 0.0f, -100.0f);
-		glEnd();
+	//Ground Plane
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_floor);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_floor);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_floor);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_floor);
+	glPushMatrix();
+	glTranslatef(0,-1,0);
+	glColor3f(0,0,0); //color of floor
+	glScalef(32,1,29); //size of floor
+	glutSolidCube(1);
+	glPopMatrix();
 
 	// create ghosts
 	for(int i=-3; i < 3; i++) {
 		glPushMatrix();
-		glTranslatef(i*10.0f, 0.0f, 10.0f);
+		glTranslatef(-1.0f, -1.0f, i);
 		drawGhost();
 		glPopMatrix();
+	}
+
+	//testing purposes only
+
+	/* LIGHTING */
+    glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, amb0);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff0);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, spec0);
+	glLightfv(GL_LIGHT1, GL_POSITION, light1_pos);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, amb1);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, diff1);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, spec1);
+	
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_turq);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_turq);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_turq);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_turq);
+	
+	//create map
+	for (int i = 0; i < first; i++)
+	{
+		for (int j = 0; j < second; j++)
+		{
+			glPushMatrix();
+			glTranslatef(i-15.5,0,j-14);
+			if (wallArray[i][j] == 255)
+			{
+				glutSolidCube(1);
+			}
+			glPopMatrix();	
+		}
 	}
 }
 
@@ -200,7 +346,10 @@ void renderGameWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
@@ -217,7 +366,10 @@ void renderTopWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
@@ -234,7 +386,10 @@ void renderSideWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
@@ -249,11 +404,11 @@ void renderScoreWin() {
 	glLoadIdentity();
 	frame++;
 
-	time=glutGet(GLUT_ELAPSED_TIME);
-	if (time - timebase > 1000) {
+	currtime=glutGet(GLUT_ELAPSED_TIME);
+	if (currtime - timebase > 1000) {
 		sprintf(s,"PacMan FPS:%4.2f",
-			frame*1000.0/(time-timebase));
-		timebase = time;
+			frame*1000.0/(currtime-timebase));
+		timebase = currtime;
 		frame = 0;
 	}
 
@@ -268,7 +423,10 @@ void renderScoreWin() {
 
 	// create yellow circle
 	glPushMatrix();
-	glColor3f(1.0, 1.0, 0.0);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_gold);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_gold);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_gold);
+	glMaterialf(GL_FRONT, GL_SHININESS, shine_gold);
 	glTranslatef(x,y,z);
 	glutSolidSphere(0.2, 4, 4);
 	glPopMatrix();
@@ -305,6 +463,9 @@ void keyboardActions(){
 			else if(keys[3] == true){
 				dMoveLR = 0.5f;
 			}
+			else{
+				dMoveLR = 0.0f;
+			}
 		}
 	}
 
@@ -316,6 +477,9 @@ void keyboardActions(){
 		}
 		else if(keys[3] == true){
 			dMoveLR = 0.5f;
+		}
+		else{
+			dMoveLR = 0.0f;
 		}
 	}
 
@@ -416,8 +580,18 @@ void mouseMove(int x, int y) {
 
 void init() {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
+	glFrontFace(GL_CCW);
+	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_COLOR_MATERIAL);
+	glColorMaterial(GL_FRONT, GL_DIFFUSE);
+
+	//quick lighting, testing purposes only
+	glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 
 	//hides cursor for game
 	glutSetCursor(GLUT_CURSOR_NONE);
@@ -433,6 +607,11 @@ void init() {
 }
 
 int main(int argc, char **argv) {
+
+	//map texture
+	LoadPPM("map.ppm", &width, &height, &maximum);
+	printf("%d\n", sizeof(wallArray)/sizeof(wallArray[0]));
+	printf("%d\n", sizeof(wallArray[0]));
 
 	// init GLUT and create main window
 	glutInit(&argc, argv);
