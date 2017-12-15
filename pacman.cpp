@@ -12,6 +12,8 @@
 #  include <GL/freeglut.h>
 #endif
 
+#define numberOfGhosts 4
+
 float angle = 0.0f;
 
 // hold main camera
@@ -74,7 +76,7 @@ const int second = 28;
 float wallArray[first][second];
 
 //Ghost Positions
-float ghostPos [4][2] = {{-14.5,12},{-14.5,-13},{13.5,-13},{13.5,12}};
+float ghostPos [numberOfGhosts][2] = {{-14.5,12},{-14.5,-13},{13.5,-13},{13.5,12}};
 float ghost1step = 0;
 float ghost2step = 0;
 float ghost3step = 0;
@@ -608,6 +610,21 @@ void updateLightPosition(float x, float z){
 	glLightfv(GL_LIGHT0, GL_POSITION, pos0);
 }
 
+void ghostHitDetection(){
+	int ghostX;
+	int ghostZ;
+	for(int i = 0; i < numberOfGhosts; i++){
+		ghostX = ghostPos[i][0];
+		ghostZ = ghostPos[i][1];
+
+		if(abs(x - ghostX) < 0.05 && abs(z - ghostZ) < 0.05){
+			printf("ghost %i HIT\n", i);
+			printf("xpos: %f, zpos: %f\n", x, z);
+			printf("ghostx: %f, ghostz: %f\n", ghostX, ghostZ);
+		}
+	}
+}
+
 bool checkPos(){
 	int xVal = round(x + 15.5);
 	int zVal = round(z + 14);
@@ -821,9 +838,8 @@ void setScene() {
 	if (dMoveFB || dMoveLR) {
 		updatePositionFB(dMoveFB);
 		updatePositionLR(dMoveLR);
-		glutSetWindow(mainWin);
-		glutPostRedisplay();
 	}
+
 	ghost1();
 	if (ghost1step == 143.5)
 	{
@@ -860,10 +876,13 @@ void setScene() {
 	{
 		ghost4step += 0.5;
 	}
+
+	ghostHitDetection();
 	renderGameWin();
 	renderTopWin();
 	renderSideWin();
 	renderScoreWin();
+	glutSetWindow(mainWin);
 	glutPostRedisplay();
 }
 
