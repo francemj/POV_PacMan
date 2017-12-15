@@ -90,6 +90,9 @@ GLubyte* floor_tex;
 int widthTex, heightTex, maxTex;
 GLuint textures[2];
 
+//score
+int score = 0;
+
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
     GLubyte* img;
@@ -634,7 +637,7 @@ void pacDotsHitDetection(){
 	if(pacDotsArray[xVal][zVal] == 0){
 		if(wallArray[xVal][zVal] == 0){
 			pacDotsArray[xVal][zVal] = -10.0f;
-			//update score
+			score = score + 10;
 		}
 		else if(wallArray[xVal][zVal] == 68){
 			pacDotsArray[xVal][zVal] = -10.0f;
