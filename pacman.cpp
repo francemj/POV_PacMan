@@ -240,6 +240,15 @@ void reset() {
 	x=7.5f;
 	z=-0.5f;
 	y=0.0f;
+	score = 0;
+
+	for(int i = 0; i < first; i++){
+		for(int j = 0; j < second; j++){
+			if(pacDotsArray[i][j] != 0){
+				pacDotsArray[i][j] = 0;
+			}
+		}
+	}
 }
 
 void resize(int width, int height) {
@@ -767,6 +776,7 @@ void ghostHitDetection(){
 			// printf("ghost %i HIT\n", i);
 			// printf("xpos: %f, zpos: %f\n", x, z);
 			// printf("ghostx: %f, ghostz: %f\n", ghostX, ghostZ);
+			reset();
 		}
 	}
 }
@@ -1278,6 +1288,7 @@ void keyboardActions(){
 
 void keyboard(unsigned char key, int xIn, int yIn) {
 	switch (key) {
+		case 27:
 		case 'q': {
 			exit(0); break;
 		}
