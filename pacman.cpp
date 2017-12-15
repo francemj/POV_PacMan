@@ -92,8 +92,13 @@ GLubyte* floor_tex;
 int widthTex, heightTex, maxTex;
 GLuint textures[2];
 
+<<<<<<< HEAD
 //score
 int score = 0;
+=======
+// Power Up State
+int poweredUp = 1;
+>>>>>>> Ren-David/RealTimeFeature
 
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
@@ -847,7 +852,6 @@ void renderShapes() {
 	}
 	
 	//create map
-	setWallColour();
 	for (int i = 0; i < first; i++)
 	{
 		for (int j = 0; j < second; j++)
@@ -856,7 +860,19 @@ void renderShapes() {
 			glTranslatef(i-15.5,0,j-14);
 			if (wallArray[i][j] == 255)
 			{
-				glutSolidCube(1);
+				setWallColour();
+
+				if(poweredUp == 1)
+				{
+					glDisable(GL_LIGHTING);
+					glColor4f(0, 0, 1, 0.5);
+					glutSolidCube(1);
+					glEnable(GL_LIGHTING);
+				}
+				else
+				{
+					glutSolidCube(1);
+				}
 			}
 			else if (wallArray[i][j] == 68)
 			{
@@ -1177,6 +1193,9 @@ void init() {
 	glMaterialfv(GL_FRONT, GL_EMISSION, glow_em);
 	glMaterialf(GL_FRONT, GL_SHININESS, shiny);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glShadeModel(GL_SMOOTH);
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
@@ -1184,16 +1203,12 @@ void init() {
 	//	************************
 	//			Textures
 	//	************************
-	
 	//enable texturing
 	glEnable(GL_TEXTURE_2D);
-
 	//generate 2 texture IDs, store them in array "textures"
 	glGenTextures(2, textures);
-
 	//load the texture (snail)
 	floor_tex = LoadPPM2("floor.ppm", &widthTex, &heightTex, &maxTex);
-
 	//setup first texture (using snail image)
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	//set texture parameters
@@ -1201,23 +1216,9 @@ void init() {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	
 	//create a texture using the "floor_tex" array data
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTex, heightTex, 0, GL_RGB, GL_UNSIGNED_BYTE, floor_tex);
 	
-	// TEXTURE 2
-	// //load the texture (marble)
-	// marble_tex = LoadTexPPM("marble.ppm", &widthTex, &heightTex, &maxTex);
-
-	// //setup second texture (using marble image)
-	// glBindTexture(GL_TEXTURE_2D, textures[1]);
-	// //set texture parameters
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// //create a texture using the "tex" array
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTex, heightTex, 0, GL_RGB, GL_UNSIGNED_BYTE, marble_tex);
 
 	//hides cursor for game
 	glutSetCursor(GLUT_CURSOR_NONE);
