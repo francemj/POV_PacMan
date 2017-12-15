@@ -36,6 +36,10 @@ float dMoveFB = 0;
 float dMoveLR = 0;
 float dX=-1;
 
+//collision safe point
+int safeX;
+int safeZ;
+
 // width and height of window
 int winHeight;
 int winWidth;
@@ -254,15 +258,85 @@ void switchOrthographicProj() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+bool checkPos(){
+	int xVal = round(x + 15.5);
+	int zVal = round(z + 14);
+	if(wallArray[xVal][zVal] == 255){
+		if(xVal != safeX){
+			if(safeX < xVal){
+				x = xVal - 16.05;
+			}
+			else{
+				x = xVal - 14.95;
+			}
+		}
+		else if(zVal != safeZ){
+			if(safeZ < zVal){
+				z = zVal - 14.55;
+			}
+			else{
+				z = zVal - 13.45;
+			}
+		}
+		
+		return true;
+	}
+
+	else{
+		safeX = xVal;
+		safeZ = zVal;
+	}
+
+	return false;
+}
+
+bool collisionCheckX(){
+	if(x <= -14.80){
+		x = -14.75;
+		return true;
+	}
+	else if(x >= 13.80){
+		x = 13.75;
+		return true;
+	}
+
+	return checkPos();
+
+	return false;
+}
+
+bool collisionCheckZ(){
+	if(z <= -13.30){
+		z = -13.25;
+		return true;
+	}
+	else if(z >= 12.30){
+		z = 12.25;
+		return true;
+	}
+
+	return checkPos();
+
+	return false;
+}
+
 void updatePositionFB(float movement){
-	x += movement *0.1f*mX;
-	z += movement *0.1f*mZ;
+	if(collisionCheckX() == false){
+		x += movement *0.1f*mX;
+	}
+	if(collisionCheckZ() == false){
+		z += movement *0.1f*mZ;
+	}
 	//printf("x: %f, z: %f, mX: %f, mY: %f\n", x, z, mX, mZ);
 }
 
 void updatePositionLR(float movement){
-	x += movement *0.1f*xL;
-	z += movement *0.1f*zL;
+	if(collisionCheckX() == false){
+		x += movement *0.1f*xL;
+	}
+	if(collisionCheckZ() == false){
+		z += movement *0.1f*zL;
+	}
 	//printf("x: %f, z: %f, mX: %f, mY: %f\n", x, z, mX, mZ);
 }
 
@@ -294,12 +368,12 @@ void renderShapes() {
     glLightfv(GL_LIGHT0, GL_AMBIENT, amb0);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diff0);
     glLightfv(GL_LIGHT0, GL_SPECULAR, spec0);
+
 	glLightfv(GL_LIGHT1, GL_POSITION, light1_pos);
     glLightfv(GL_LIGHT1, GL_AMBIENT, amb1);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, diff1);
     glLightfv(GL_LIGHT1, GL_SPECULAR, spec1);
 	
-
 	glMaterialfv(GL_FRONT, GL_AMBIENT, amb_turq);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, diff_turq);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_turq);
