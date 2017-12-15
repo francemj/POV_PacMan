@@ -271,14 +271,14 @@ void setRedGlow() {
 
 void setGroundColour() {
 	// Ambience
-	glow_amb[0] = 0.25f;
-	glow_amb[1] = 0.25f; 
-	glow_amb[2] = 0.25f; 
+	glow_amb[0] = 0.5f;
+	glow_amb[1] = 0.5f; 
+	glow_amb[2] = 0.5f; 
 	glow_amb[3] = 1;
 	// Emission
-	glow_em[0] = 0.25f;
-	glow_em[1] = 0.25f; 
-	glow_em[2] = 0.25f; 
+	glow_em[0] = 0.5f;
+	glow_em[1] = 0.5f; 
+	glow_em[2] = 0.5f; 
 	glow_em[3] = 1;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
