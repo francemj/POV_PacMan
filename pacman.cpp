@@ -12,7 +12,7 @@
 #  include <GL/freeglut.h>
 #endif
 
-#define numberOfGhosts 4
+#define numberOfGhosts 6
 
 float angle = 0.0f;
 
@@ -76,11 +76,13 @@ const int second = 28;
 float wallArray[first][second];
 
 //Ghost Positions
-float ghostPos [numberOfGhosts][2] = {{-14.5,12},{-14.5,-13},{13.5,-13},{13.5,12}};
+float ghostPos [numberOfGhosts][2]= {{-14.5,12},{-14.5,-13},{13.5,-13},{13.5,12},{-2.5,0},{-2.5,-1}};
 float ghost1step = 0;
 float ghost2step = 0;
 float ghost3step = 0;
 float ghost4step = 0;
+float ghost5step = 0;
+float ghost6step = 0;
 
 //Pac Dots and Power Ups
 float pacDotsArray[first][second];
@@ -90,8 +92,13 @@ GLubyte* floor_tex;
 int widthTex, heightTex, maxTex;
 GLuint textures[2];
 
+<<<<<<< HEAD
 //score
 int score = 0;
+=======
+// Power Up State
+int poweredUp = 1;
+>>>>>>> Ren-David/RealTimeFeature
 
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
@@ -610,6 +617,110 @@ void ghost4()
 	}
 }
 
+void ghost5()
+{
+	if (ghost5step > -1 && ghost5step < 8)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+	else if (ghost5step >7 && ghost5step <12)
+	{
+		ghostPos[4][1] += 0.125;
+	}
+	else if (ghost5step >11 && ghost5step <24)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+	else if (ghost5step >23 && ghost5step <36)
+	{
+		ghostPos[4][1] += 0.125;
+	}
+	else if (ghost5step >35 && ghost5step <48)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+	else if (ghost5step >47 && ghost5step <60)
+	{
+		ghostPos[4][1] += 0.125;
+	}
+	else if (ghost5step >59 && ghost5step <120)
+	{
+		ghostPos[4][0] += 0.125;
+	}
+	else if (ghost5step >119 && ghost5step <132)
+	{
+		ghostPos[4][1] -= 0.125;
+	}
+	else if (ghost5step >131 && ghost5step <168)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+	else if (ghost5step >167 && ghost5step <184)
+	{
+		ghostPos[4][1] -= 0.125;
+	}
+	else if (ghost5step >183 && ghost5step <200)
+	{
+		ghostPos[4][0] += 0.125;
+	}
+	else if (ghost5step >199 && ghost5step <208)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+}
+
+void ghost6()
+{
+	if (ghost6step > -1 && ghost6step < 8)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+	else if (ghost6step >7 && ghost6step <12)
+	{
+		ghostPos[5][1] -= 0.125;
+	}
+	else if (ghost6step >11 && ghost6step <24)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+	else if (ghost6step >23 && ghost6step <36)
+	{
+		ghostPos[5][1] -= 0.125;
+	}
+	else if (ghost6step >35 && ghost6step <48)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+	else if (ghost6step >47 && ghost6step <60)
+	{
+		ghostPos[5][1] -= 0.125;
+	}
+	else if (ghost6step >59 && ghost6step <120)
+	{
+		ghostPos[5][0] += 0.125;
+	}
+	else if (ghost6step >119 && ghost6step <132)
+	{
+		ghostPos[5][1] += 0.125;
+	}
+	else if (ghost6step >131 && ghost6step <168)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+	else if (ghost6step >167 && ghost6step <184)
+	{
+		ghostPos[5][1] += 0.125;
+	}
+	else if (ghost6step >183 && ghost6step <200)
+	{
+		ghostPos[5][0] += 0.125;
+	}
+	else if (ghost6step >199 && ghost6step <208)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+}
+
 void updateLightPosition(float x, float z){
 	pos0[0] = x;
 	pos0[0] = z;
@@ -734,14 +845,13 @@ void renderShapes() {
 	resetLightingProperties();
 
 	// create ghosts
-	for(int i = 0; i < 4; i++) {
+	for(int i = 0; i < numberOfGhosts; i++) {
 		glPushMatrix();
 			drawGhost(ghostPos[i][0], -1.0f, ghostPos[i][1]);
 		glPopMatrix();
 	}
 	
 	//create map
-	setWallColour();
 	for (int i = 0; i < first; i++)
 	{
 		for (int j = 0; j < second; j++)
@@ -750,7 +860,19 @@ void renderShapes() {
 			glTranslatef(i-15.5,0,j-14);
 			if (wallArray[i][j] == 255)
 			{
-				glutSolidCube(1);
+				setWallColour();
+
+				if(poweredUp == 1)
+				{
+					glDisable(GL_LIGHTING);
+					glColor4f(0, 0, 1, 0.5);
+					glutSolidCube(1);
+					glEnable(GL_LIGHTING);
+				}
+				else
+				{
+					glutSolidCube(1);
+				}
 			}
 			else if (wallArray[i][j] == 68)
 			{
@@ -861,6 +983,7 @@ void setScene() {
 		updatePositionLR(dMoveLR);
 	}
 
+	//These "ghost" functions move the ghost in a particular pattern depending on starting positions
 	ghost1();
 	if (ghost1step == 143.5)
 	{
@@ -898,6 +1021,24 @@ void setScene() {
 		ghost4step += 0.5;
 	}
 
+	ghost5();
+	if (ghost5step == 207.5)
+	{
+		ghost5step = 0;
+	}
+	else
+	{
+		ghost5step += 0.5;
+	}
+	ghost6();
+	if (ghost6step == 207.5)
+	{
+		ghost6step = 0;
+	}
+	else
+	{
+		ghost6step += 0.5;
+	}
 	ghostHitDetection();
 	pacDotsHitDetection();
 	renderGameWin();
@@ -1052,6 +1193,9 @@ void init() {
 	glMaterialfv(GL_FRONT, GL_EMISSION, glow_em);
 	glMaterialf(GL_FRONT, GL_SHININESS, shiny);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glShadeModel(GL_SMOOTH);
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
@@ -1059,16 +1203,12 @@ void init() {
 	//	************************
 	//			Textures
 	//	************************
-	
 	//enable texturing
 	glEnable(GL_TEXTURE_2D);
-
 	//generate 2 texture IDs, store them in array "textures"
 	glGenTextures(2, textures);
-
 	//load the texture (snail)
 	floor_tex = LoadPPM2("floor.ppm", &widthTex, &heightTex, &maxTex);
-
 	//setup first texture (using snail image)
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	//set texture parameters
@@ -1076,23 +1216,9 @@ void init() {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	
 	//create a texture using the "floor_tex" array data
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTex, heightTex, 0, GL_RGB, GL_UNSIGNED_BYTE, floor_tex);
 	
-	// TEXTURE 2
-	// //load the texture (marble)
-	// marble_tex = LoadTexPPM("marble.ppm", &widthTex, &heightTex, &maxTex);
-
-	// //setup second texture (using marble image)
-	// glBindTexture(GL_TEXTURE_2D, textures[1]);
-	// //set texture parameters
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// //create a texture using the "tex" array
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTex, heightTex, 0, GL_RGB, GL_UNSIGNED_BYTE, marble_tex);
 
 	//hides cursor for game
 	glutSetCursor(GLUT_CURSOR_NONE);
