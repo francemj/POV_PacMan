@@ -36,6 +36,10 @@ float dMoveFB = 0;
 float dMoveLR = 0;
 float dX=-1;
 
+//collision safe point
+int safeX;
+int safeZ;
+
 // width and height of window
 int winHeight;
 int winWidth;
@@ -69,18 +73,17 @@ const int first = 31;
 const int second = 28;
 float wallArray[first][second];
 
-<<<<<<< HEAD
 //Ghost Positions
 float ghostPos [4][2] = {{-14.5,12},{-14.5,-13},{13.5,-13},{13.5,12}};
 float ghost1step = 0;
 float ghost2step = 0;
 float ghost3step = 0;
 float ghost4step = 0;
-=======
+
 // Texture Data
 GLubyte* floor_tex;
+int widthTex, heightTex, maxTex;
 GLuint textures[2];
->>>>>>> 5df2b58e1b5a95ad230a5f81851319af30db29c7
 
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
@@ -438,7 +441,6 @@ void switchOrthographicProj() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-<<<<<<< HEAD
 //Ghost Algorithms
 void ghost1()
 {
@@ -599,26 +601,92 @@ void ghost4()
 		ghostPos[3][0] += 0.125;
 	}
 }
-=======
+
 void updateLightPosition(float x, float z){
 	pos0[0] = x;
 	pos0[0] = z;
 	glLightfv(GL_LIGHT0, GL_POSITION, pos0);
->>>>>>> 5df2b58e1b5a95ad230a5f81851319af30db29c7
+}
+
+bool checkPos(){
+	int xVal = round(x + 15.5);
+	int zVal = round(z + 14);
+	if(wallArray[xVal][zVal] == 255){
+		if(xVal != safeX){
+			if(safeX < xVal){
+				x = xVal - 16.05;
+			}
+			else{
+				x = xVal - 14.95;
+			}
+		}
+		else if(zVal != safeZ){
+			if(safeZ < zVal){
+				z = zVal - 14.55;
+			}
+			else{
+				z = zVal - 13.45;
+			}
+		}
+		
+		return true;
+	}
+
+	else{
+		safeX = xVal;
+		safeZ = zVal;
+	}
+
+	return false;
+}
+
+bool collisionCheckX(){
+	if(x <= -14.80){
+		x = -14.75;
+		return true;
+	}
+	else if(x >= 13.80){
+		x = 13.75;
+		return true;
+	}
+
+	return checkPos();
+
+	return false;
+}
+
+bool collisionCheckZ(){
+	if(z <= -13.30){
+		z = -13.25;
+		return true;
+	}
+	else if(z >= 12.30){
+		z = 12.25;
+		return true;
+	}
+
+	return checkPos();
+
+	return false;
 }
 
 void updatePositionFB(float movement){
-	x += movement *0.1f*mX;
-	z += movement *0.1f*mZ;
-	updateLightPosition(x, z);
-	//printf("x: %f, z: %f, mX: %f, mY: %f\n", x, z, mX, mZ);
+	if(collisionCheckX() == false){
+		x += movement *0.1f*mX;
+	}
+	if(collisionCheckZ() == false){
+		z += movement *0.1f*mZ;
+	}
 }
 
 void updatePositionLR(float movement){
-	x += movement *0.1f*xL;
-	z += movement *0.1f*zL;
+	if(collisionCheckX() == false){
+		x += movement *0.1f*xL;
+	}
+	if(collisionCheckZ() == false){
+		z += movement *0.1f*zL;
+	}
 	updateLightPosition(x, z);
-	//printf("x: %f, z: %f, mX: %f, mY: %f\n", x, z, mX, mZ);
 }
 
 void renderShapes() {
@@ -633,7 +701,6 @@ void renderShapes() {
 			drawGhost(ghostPos[i][0], -1.0f, ghostPos[i][1]);
 		glPopMatrix();
 	}
-
 	
 	//create map
 	setWallColour();
