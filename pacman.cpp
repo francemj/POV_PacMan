@@ -19,14 +19,21 @@ float mX=0.0f;
 float mZ=-1.0f;
 float mY=0.0f;
 
+//values for left and right
+float xL;
+float xR;
+float zL;
+float zR;
+
 // hold xz camera
-float x=0.0f;
-float z=5.0f;
-float y=1.75f;
+float x=7.5f;
+float z=-0.5f;
+float y=0.0f;
 
 // key states
 float dAngle=0.0f;
-float dMove = 0;
+float dMoveFB = 0;
+float dMoveLR = 0;
 float dX=-1;
 
 // width and height of window
@@ -35,20 +42,86 @@ int winWidth;
 
 // computer framerate
 int frame;
-long time, timebase;
-char s[50];
-
-int mainWin, gameWin, topWin, sideWin, scoreWin;
-int winBorder = 6;
 
 // Light Position
-float pos[4] = {x,0,z,0};
+float pos0[4] = {x,0,z,0};
+float pos1[4] = {x,5,z,0};
 
 float glow_amb[] = {0.1f, 0, 0.1f, 1.0};
 float glow_dif[] = {1, 0, 0, 1.0};
 float glow_spec[] = {0.1f, 0.1f, 0.1f, 1.0};
 float glow_em[] = {0,0,0,0.5f};
 float shiny = 5; //10, 100
+
+long currtime, timebase;
+char s[50];
+
+//keyboard buttons array
+bool keys[4];
+
+int mainWin, gameWin, topWin, sideWin, scoreWin;
+int winBorder = 6;
+
+//Map Generation
+int width, height, maximum;
+GLubyte* image;
+const int first = 31;
+const int second = 28;
+float wallArray[first][second];
+
+GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
+{
+    GLubyte* img;
+    FILE *fd;
+    int n, m;
+    int  k, nm;
+    char c;
+    int i;
+    char b[100];
+    float s;
+    int red, green, blue;
+    
+    /* first open file and check if it's an ASCII PPM (indicated by P3 at the start) */
+    fd = fopen(file, "r");
+    fscanf(fd,"%[^\n] ",b);
+    if(b[0]!='P'|| b[1] != '3')
+    {
+        printf("%s is not a PPM file!\n",file);
+        exit(0);
+    }
+    printf("%s is a PPM file\n", file);
+    fscanf(fd, "%c",&c);
+    
+    /* next, skip past the comments - any line starting with #*/
+    while(c == '#')
+    {
+        fscanf(fd, "%[^\n] ", b);
+        printf("%s\n",b);
+        fscanf(fd, "%c",&c);
+    }
+    ungetc(c,fd);
+    
+    /* now get the dimensions and maximum colour value from the image */
+    fscanf(fd, "%d %d %d", &n, &m, &k);
+    
+    /* calculate number of pixels and allocate storage for this */
+    nm = n*m;
+    img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
+    s=255.0/k;
+	
+    /* for every pixel, grab the read green and blue values, storing them in the image data array */
+    for(i=0;i<nm;i++)
+    {
+        fscanf(fd,"%d %d %d",&red, &green, &blue );
+        img[3*nm-3*i-3]=red*s;
+		wallArray[(int) floor(i/n)][i%n] = img[3*nm-3*i-3];
+    }
+    
+    /* finally, set the "return parameters" (width, height, maximum) and return the image array */
+    *width = n;
+    *height = m;
+    *maximum = k;
+}
 
 void setProjection(int width, int height) {
 	
@@ -135,20 +208,44 @@ void setPowerUpColour() {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
 }
 
-void setRed() {
-	glow_dif[0] = 1; 
-	glow_dif[1] = 0; 
-	glow_dif[2] = 0; 
-	glow_dif[3] = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+void setRedGlow() {
+	glow_em[0] = 1; 
+	glow_em[1] = 0; 
+	glow_em[2] = 0; 
+	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
 }
 
 void setGroundColour() {
-	glow_em[0] = 0; 
-	glow_em[1] = 0; 
-	glow_em[2] = 1; 
+	// Ambience
+	glow_amb[0] = 0.25f;
+	glow_amb[1] = 0.25f; 
+	glow_amb[2] = 0.25f; 
+	glow_amb[3] = 1;
+	// Emission
+	glow_em[0] = 0.25f;
+	glow_em[1] = 0.25f; 
+	glow_em[2] = 0.25f; 
 	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setWallColour() {
+	// Ambience
+	glow_amb[0] = 0;
+	glow_amb[1] = 0; 
+	glow_amb[2] = 1; 
+	glow_amb[3] = 1;
+	
+	// Diffuse
+	glow_dif[0] = 0; 
+	glow_dif[1] = 0; 
+	glow_dif[2] = 1; 
+	glow_dif[3] = 1;
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
 }
 
 void setBlack(){
@@ -166,9 +263,9 @@ void setWhite(){
 }
 
 void setGhostColour() {
-	glow_dif[0] = 0.25f; 
-	glow_dif[1] = 0.25f; 
-	glow_dif[2] = 0.25f; 
+	glow_dif[0] = 1; 
+	glow_dif[1] = 0; 
+	glow_dif[2] = 0; 
 	glow_dif[3] = 1;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
 }
@@ -180,8 +277,8 @@ void setGhostColour() {
 void drawPacDots() {
 	glPushMatrix();
 		setPacDotsColour();
-		glTranslatef(0,1.5f,0);
-		glutSolidSphere(0.15,50,50);
+		glTranslatef(0,-0.25f,0);
+		glutSolidSphere(0.05,50,50);
 		resetLightingProperties();
 	glPopMatrix();
 }
@@ -189,67 +286,45 @@ void drawPacDots() {
 void drawPowerUps() {
 	glPushMatrix();
 		setPowerUpColour();
-		glTranslatef(0,1.5f,0);
-		glutSolidSphere(0.3,50,50);
+		glTranslatef(0,-0.25f,0);
+		glutSolidSphere(0.1,50,50);
 		resetLightingProperties();
 	glPopMatrix();
 }
 
 void drawPacMan() {
-	glPushMatrix();
-		setPacManColour();
-		glTranslatef(x,y,z);
-		glutSolidSphere(0.5, 10, 10);
-		resetLightingProperties();
-
-		// Eyes
-	/*	glRotatef(20, 0, 1, 0);
-		glPushMatrix();
-			setBlack();
-			glTranslatef(0.4, 0.1, 0);
-			glutSolidSphere(0.125,10,10);
-		glPopMatrix();
-		glRotatef(-40, 0, 1, 0);
-		glPushMatrix();
-			setBlack();
-			glTranslatef(0.4, 0.1, 0);
-			glutSolidSphere(0.125,10,10);
-		glPopMatrix();
-		glRotatef(20, 0, 1, 0);
-		resetLightingProperties();*/
-
-	glPopMatrix();
+	setPacManColour();
+	glutSolidSphere(0.2, 10, 10);
+	resetLightingProperties();
 }
 
 void drawGhost() {
 
-	// setGhostColour();
-	setRed();
+	setGhostColour();
 
 	// cylinder body using quadric object
-	glTranslatef(0.0f, 0.75f, 0.0f);
+	glTranslatef(0.0f, 0.0f, 0.0f);
 	glRotatef(-90, 1.0, 0.0, 0.0);
 	GLUquadricObj *quadObj;
 	quadObj = gluNewQuadric();
 	gluQuadricDrawStyle(quadObj, GLU_FILL);
 	gluQuadricNormals(quadObj, GLU_SMOOTH);
-	gluCylinder(quadObj, 0.6, 0.6, 1.2, 40, 6);
+	gluCylinder(quadObj, 0.25, 0.25, 1.2, 40, 6);
 	glRotatef(90, 1.0, 0.0, 0.0);
 
 	// head
 	glTranslatef(0.0f, 1.2f, 0.0f);
-	glutSolidSphere(0.6f,20,20);
+	glutSolidSphere(0.25f,20,20);
 
 	// eyes
 	glPushMatrix();
-	setWhite();
-	glTranslatef(0.1f, 0.10f, 0.6f);
-	glutSolidSphere(0.05f,10,10);
-	glTranslatef(-0.2f, 0.0f, 0.0f);
-	glutSolidSphere(0.05f,10,10);
+		setWhite();
+		glTranslatef(-0.2f, 0.10f, 0.1f);
+		glutSolidSphere(0.03f,10,10);
+		glTranslatef(0.0f, 0.0f, -0.2f);
+		glutSolidSphere(0.03f,10,10);
 	glPopMatrix();
 	resetLightingProperties();
-	
 }
 
 // create a string using glut
@@ -283,49 +358,62 @@ void switchOrthographicProj() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void updatePosition(float movement){
+
+void updatePositionFB(float movement){
 	x += movement *0.1f*mX;
 	z += movement *0.1f*mZ;
+	//printf("x: %f, z: %f, mX: %f, mY: %f\n", x, z, mX, mZ);
+}
+
+void updatePositionLR(float movement){
+	x += movement *0.1f*xL;
+	z += movement *0.1f*zL;
+	//printf("x: %f, z: %f, mX: %f, mY: %f\n", x, z, mX, mZ);
 }
 
 void renderShapes() {
-	// create 100x100 grey background for ground
+	//Ground Plane
 	setGroundColour();
-		glBegin(GL_QUADS);
-			glVertex3f(-100.0f, 0.0f, -100.0f);
-			glVertex3f(-100.0f, 0.0f,  100.0f);
-			glVertex3f( 100.0f, 0.0f,  100.0f);
-			glVertex3f( 100.0f, 0.0f, -100.0f);
-		glEnd();
+	glPushMatrix();
+		glTranslatef(-0.5,-1,-0.5);
+		glColor3f(0,0,0); //color of floor
+		glScalef(31,1,28); //size of floor
+		glutSolidCube(1);
+	glPopMatrix();
 	resetLightingProperties();
 
 	// create ghosts
 	for(int i=-3; i < 3; i++) {
 		glPushMatrix();
-		glTranslatef(i*10.0f, 0.0f, 10.0f);
-		drawGhost();
+			glTranslatef(-1.0f, -1.0f, i);
+			drawGhost();
 		glPopMatrix();
 	}
-
-	// create Pac Dots
-	for(int i = -3; i < 3; i++)
-		for(int j=-3; j < 3; j++)
+	
+	//create map
+	setWallColour();
+	for (int i = 0; i < first; i++)
+	{
+		for (int j = 0; j < second; j++)
 		{
 			glPushMatrix();
-			glTranslatef(i*10.0f+5, 0.0f, j * 10.0f+5);
-			drawPacDots();
-			glPopMatrix();
+			glTranslatef(i-15.5,0,j-14);
+			if (wallArray[i][j] == 255)
+			{
+				glutSolidCube(1);
+			}
+			else if (wallArray[i][j] == 68)
+			{
+				drawPowerUps();
+			}
+			else if (wallArray[i][j] == 0)
+			{
+				drawPacDots();
+			}
+			glPopMatrix();	
 		}
-
-	// create Power Ups
-	for(int i = -3; i < 3; i++)
-		for(int j=-3; j < 3; j++)
-		{
-			glPushMatrix();
-			glTranslatef(i*10.0f, 0.0f, j*10.0f+5);
-			drawPowerUps();
-			glPopMatrix();
-		}
+	}
+	resetLightingProperties();
 }
 
 // render mainWin, gameWin, topWin, sideWin, scoreWin
@@ -339,11 +427,22 @@ void renderGameWin() {
 	glutSetWindow(gameWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	pos0[0] = x;
+	pos0[2] = z;
+	glLightfv(GL_LIGHT0, GL_POSITION, pos0);
+
+	pos1[0] = x;
+	pos1[2] = z;
+	glLightfv(GL_LIGHT0, GL_POSITION, pos1);
+
 	glLoadIdentity();
 	gluLookAt(x, y, z, x + mX,y + mY,z + mZ, 0.0f,1.0f,0.0f);
 
 	// create PacMan
-	// drawPacMan();
+	glPushMatrix();
+		glTranslatef(x,y,z);
+		drawPacMan();
+	glPopMatrix();
 
 	renderShapes();
 	glutSwapBuffers();
@@ -353,10 +452,13 @@ void renderTopWin() {
 	glutSetWindow(topWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(x, y + 15, z, x,y - 1,z, mX, 0.0f, mZ);
+	gluLookAt(x, y + 10, z, x,y - 1,z, 1, 0.0f, 0);
 
 	// create PacMan
-	drawPacMan();
+	glPushMatrix();
+		glTranslatef(x,y,z);
+		drawPacMan();
+	glPopMatrix();
 
 	renderShapes();
 	glutSwapBuffers();
@@ -366,10 +468,13 @@ void renderSideWin() {
 	glutSetWindow(sideWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(x-mZ*10, y, z+mX*10, x, y, z, 0.0f, 1.0f, 0.0f);
+	gluLookAt(x-mZ*1.1, y, z+mX*1.1, x, y, z, 0.0f, 1.0f, 0.0f);
 
 	// create PacMan
-	drawPacMan();
+	glPushMatrix();
+		glTranslatef(x,y,z);
+		drawPacMan();
+	glPopMatrix();
 
 	renderShapes();
 	glutSwapBuffers();
@@ -381,11 +486,11 @@ void renderScoreWin() {
 	glLoadIdentity();
 	frame++;
 
-	time=glutGet(GLUT_ELAPSED_TIME);
-	if (time - timebase > 1000) {
+	currtime=glutGet(GLUT_ELAPSED_TIME);
+	if (currtime - timebase > 1000) {
 		sprintf(s,"PacMan FPS:%4.2f",
-			frame*1000.0/(time-timebase));
-		timebase = time;
+			frame*1000.0/(currtime-timebase));
+		timebase = currtime;
 		frame = 0;
 	}
 
@@ -398,16 +503,20 @@ void renderScoreWin() {
 
 	switchPerspectiveProj();
 
-	// create PacMan
-	drawPacMan();
+	// create yellow circle
+	glPushMatrix();
+		glTranslatef(x,y,z);
+		drawPacMan();
+	glPopMatrix();
 
 	renderShapes();
 	glutSwapBuffers();
 }
 
 void setScene() {
-	if (dMove) {
-		updatePosition(dMove);
+	if (dMoveFB || dMoveLR) {
+		updatePositionFB(dMoveFB);
+		updatePositionLR(dMoveLR);
 		glutSetWindow(mainWin);
 		glutPostRedisplay();
 	}
@@ -418,6 +527,59 @@ void setScene() {
 	renderScoreWin();
 }
 
+void keyboardActions(){
+	if(keys[0] == true){//move forward
+		if(keys[1] == true){
+			dMoveFB = 0;
+		}
+		else{
+			dMoveFB = 0.5f;
+
+			if(keys[2] == true){
+				dMoveLR = -0.5f;
+			}
+			else if(keys[3] == true){
+				dMoveLR = 0.5f;
+			}
+			else{
+				dMoveLR = 0.0f;
+			}
+		}
+	}
+
+	else if(keys [1] == true){//move backwards
+		dMoveFB = -0.5f;
+
+		if(keys[2] == true){
+			dMoveLR = -0.5f;
+		}
+		else if(keys[3] == true){
+			dMoveLR = 0.5f;
+		}
+		else{
+			dMoveLR = 0.0f;
+		}
+	}
+
+	else if(keys [2] == true){//move left
+		if(keys[3] == true){
+			dMoveLR = 0;
+		}
+		else{
+			dMoveLR = -0.5f;
+		}
+	}
+
+	else if(keys [3] == true){//move right
+		dMoveLR = 0.5f;
+	}
+
+	else{
+		dMoveFB = 0;
+		dMoveLR = 0;
+	}
+}
+
 void keyboard(unsigned char key, int xIn, int yIn) {
 	switch (key) {
 
@@ -426,14 +588,30 @@ void keyboard(unsigned char key, int xIn, int yIn) {
 			exit(0);
 			break;
 		}
+		case 'w': keys[0] = true; break;
+		case 's': keys[1] = true; break;
+		case 'a': keys[2] = true; break;
+		case 'd': keys[3] = true; break;
 	}
+	glutSetWindow(mainWin);
+	keyboardActions();
 	glutPostRedisplay();
+}
+
+void uKeyboard(unsigned char key, int xIn, int yIn) {
+	switch (key) {
+		case 'w': keys[0] = false; break;
+		case 's': keys[1] = false; break;
+		case 'a': keys[2] = false; break;
+		case 'd': keys[3] = false; break;
+	}
+	keyboardActions();
 }
 
 void dSpecialKeyboard(int key, int xIn, int yIn) {
 	switch (key) {
-		case GLUT_KEY_UP : dMove = 0.5f; break;
-		case GLUT_KEY_DOWN : dMove = -0.5f; break;
+		case GLUT_KEY_UP : dMoveFB = 0.5f; break;
+		case GLUT_KEY_DOWN : dMoveFB = -0.5f; break;
 	}
 	glutSetWindow(mainWin);
 	glutPostRedisplay();
@@ -443,7 +621,7 @@ void dSpecialKeyboard(int key, int xIn, int yIn) {
 void uSpecialKeyboard(int key, int xIn, int yIn) {
 	switch (key) {
 		case GLUT_KEY_UP :
-		case GLUT_KEY_DOWN : dMove = 0; break;
+		case GLUT_KEY_DOWN : dMoveFB = 0; break;
 	}
 }
 
@@ -465,9 +643,12 @@ void mouseMotion(int x, int y){
 
 void mouseMove(int x, int y) {
 	dAngle = (x - dX) * 0.010f;
-
+	
 	mX = sin(angle + dAngle);
 	mZ = -cos(angle + dAngle);
+
+	xL = sin(1.62 + dAngle);
+	zL = -cos(1.62 + dAngle);
 
 	glutSetWindow(mainWin);
 	glutPostRedisplay();
@@ -480,8 +661,9 @@ void init() {
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 
-	glLightfv(GL_LIGHT0, GL_POSITION, pos);
+	glLightfv(GL_LIGHT1, GL_POSITION, pos1);
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
@@ -489,9 +671,21 @@ void init() {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
 
+	glShadeModel(GL_SMOOTH);
+	glFrontFace(GL_CCW);
+	glCullFace(GL_BACK);
+
+	// Check for Removal
+	// glEnable(GL_COLOR_MATERIAL);
+	// glColorMaterial(GL_FRONT, GL_DIFFUSE);
+
+	//hides cursor for game
+	glutSetCursor(GLUT_CURSOR_NONE);
+
 	// register callbacks
 	glutIgnoreKeyRepeat(1);
 	glutKeyboardFunc(keyboard);
+	glutKeyboardUpFunc(uKeyboard);
 	glutSpecialFunc(dSpecialKeyboard);
 	glutSpecialUpFunc(uSpecialKeyboard);
 	glutMouseFunc(mouseButton);
@@ -499,12 +693,16 @@ void init() {
 }
 
 int main(int argc, char **argv) {
+	//map texture
+	LoadPPM("map.ppm", &width, &height, &maximum);
+	printf("%d\n", sizeof(wallArray)/sizeof(wallArray[0]));
+	printf("%d\n", sizeof(wallArray[0]));
 
 	// init GLUT and create main window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100,100);
-	glutInitWindowSize(800,800);
+	glutInitWindowSize(1300,800);
 	mainWin = glutCreateWindow("PacMan 3D");
 
 	// callbacks for main window
