@@ -69,6 +69,11 @@ const int first = 31;
 const int second = 28;
 float wallArray[first][second];
 
+// Texture Data
+GLubyte* floor_tex;
+int widthTex, heightTex, maxTex;
+GLuint textures[2];
+
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
     GLubyte* img;
@@ -121,6 +126,54 @@ GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
     *width = n;
     *height = m;
     *maximum = k;
+}
+
+
+GLubyte* LoadPPM2(char* file, int* width, int* height, int* maximum)
+{
+	GLubyte* img;
+	FILE *fd;
+	int n, m;
+	int  k, nm;
+	char c;
+	int i;
+	char b[100];
+	float s;
+	int red, green, blue;
+	
+	fd = fopen(file, "r");
+	fscanf(fd,"%[^\n] ",b);
+	if(b[0]!='P'|| b[1] != '3'){
+		printf("%s is not a PPM file!\n",file); 
+		exit(0);
+	}
+	fscanf(fd, "%c",&c);
+	while(c == '#') 
+	{
+		fscanf(fd, "%[^\n] ", b);
+		printf("%s\n",b);
+		fscanf(fd, "%c",&c);
+	}
+	ungetc(c,fd); 
+	fscanf(fd, "%d %d %d", &n, &m, &k);
+	nm = n*m;
+	img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
+
+
+	s=255.0/k;
+
+	for(i=0;i<nm;i++) {
+		fscanf(fd,"%d %d %d",&red, &green, &blue );
+		img[3*nm-3*i-3]=red*s;
+		img[3*nm-3*i-2]=green*s;
+		img[3*nm-3*i-1]=blue*s;
+	}
+
+	*width = n;
+	*height = m;
+	*maximum = k;
+
+	return img;
 }
 
 void setProjection(int width, int height) {
@@ -278,7 +331,7 @@ void drawPacDots() {
 	glPushMatrix();
 		setPacDotsColour();
 		glTranslatef(0,-0.25f,0);
-		glutSolidSphere(0.05,50,50);
+		glutSolidSphere(0.05,10,10);
 		resetLightingProperties();
 	glPopMatrix();
 }
@@ -287,7 +340,7 @@ void drawPowerUps() {
 	glPushMatrix();
 		setPowerUpColour();
 		glTranslatef(0,-0.25f,0);
-		glutSolidSphere(0.1,50,50);
+		glutSolidSphere(0.1,10,10);
 		resetLightingProperties();
 	glPopMatrix();
 }
@@ -325,6 +378,24 @@ void drawGhost() {
 		glutSolidSphere(0.03f,10,10);
 	glPopMatrix();
 	resetLightingProperties();
+}
+
+void drawFloor() {
+
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glBegin(GL_POLYGON);
+		glTexCoord2f(0, 0);
+		glVertex3f(15,-0.5, -14.5);
+
+		glTexCoord2f(0, 1);
+		glVertex3f(-16,-0.5, -14.5);
+
+		glTexCoord2f(1, 1);
+		glVertex3f(-16,-0.5, 13.5);
+
+		glTexCoord2f(1, 0);
+		glVertex3f(15,-0.5, 13.5);
+	glEnd();
 }
 
 // create a string using glut
@@ -374,12 +445,12 @@ void updatePositionLR(float movement){
 void renderShapes() {
 	//Ground Plane
 	setGroundColour();
-	glPushMatrix();
-		glTranslatef(-0.5,-1,-0.5);
-		glColor3f(0,0,0); //color of floor
-		glScalef(31,1,28); //size of floor
-		glutSolidCube(1);
-	glPopMatrix();
+	// glPushMatrix();
+	// 	glTranslatef(-0.5,-1,-0.5);
+	// 	glScalef(31,1,28); //size of floor
+	// 	glutSolidCube(1);
+	// glPopMatrix();
+	drawFloor(); // Draw Floor
 	resetLightingProperties();
 
 	// create ghosts
@@ -675,9 +746,43 @@ void init() {
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
 
-	// Check for Removal
-	// glEnable(GL_COLOR_MATERIAL);
-	// glColorMaterial(GL_FRONT, GL_DIFFUSE);
+	//	************************
+	//			Textures
+	//	************************
+	
+	//enable texturing
+	glEnable(GL_TEXTURE_2D);
+
+	//generate 2 texture IDs, store them in array "textures"
+	glGenTextures(2, textures);
+
+	//load the texture (snail)
+	floor_tex = LoadPPM2("floor.ppm", &widthTex, &heightTex, &maxTex);
+
+	//setup first texture (using snail image)
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	//set texture parameters
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+	//create a texture using the "floor_tex" array data
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTex, heightTex, 0, GL_RGB, GL_UNSIGNED_BYTE, floor_tex);
+	
+	// TEXTURE 2
+	// //load the texture (marble)
+	// marble_tex = LoadTexPPM("marble.ppm", &widthTex, &heightTex, &maxTex);
+
+	// //setup second texture (using marble image)
+	// glBindTexture(GL_TEXTURE_2D, textures[1]);
+	// //set texture parameters
+	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	// //create a texture using the "tex" array
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTex, heightTex, 0, GL_RGB, GL_UNSIGNED_BYTE, marble_tex);
 
 	//hides cursor for game
 	glutSetCursor(GLUT_CURSOR_NONE);
