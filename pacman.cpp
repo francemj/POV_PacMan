@@ -97,6 +97,7 @@ int score = 0;
 
 // Power Up State
 int poweredUp = 0;
+int powerUpCounter = 0;
 
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
@@ -740,6 +741,14 @@ void ghostHitDetection(){
 	}
 }
 
+void activatePowerUp(){
+	poweredUp = 1;
+}
+
+void deactivatePowerUp(){
+	poweredUp = 0;
+}
+
 void pacDotsHitDetection(){
 	int xVal = round(x + 15.5);
 	int zVal = round(z + 14);
@@ -750,7 +759,7 @@ void pacDotsHitDetection(){
 		}
 		else if(wallArray[xVal][zVal] == 68){
 			pacDotsArray[xVal][zVal] = -10.0f;
-			//do power up things
+			activatePowerUp();
 		}
 	}
 }
@@ -976,6 +985,14 @@ void renderScoreWin() {
 }
 
 void setScene() {
+	if (poweredUp == 1){
+		if(powerUpCounter >= 500){
+			deactivatePowerUp();
+			powerUpCounter = 0;
+		}
+		powerUpCounter++;
+	}
+
 	if (dMoveFB || dMoveLR) {
 		updatePositionFB(dMoveFB);
 		updatePositionLR(dMoveLR);
@@ -1037,6 +1054,8 @@ void setScene() {
 	{
 		ghost6step += 0.5;
 	}
+
+
 	ghostHitDetection();
 	pacDotsHitDetection();
 	renderGameWin();
