@@ -12,6 +12,8 @@
 #  include <GL/freeglut.h>
 #endif
 
+#define numberOfGhosts 6
+
 float angle = 0.0f;
 
 // hold main camera
@@ -74,11 +76,13 @@ const int second = 28;
 float wallArray[first][second];
 
 //Ghost Positions
-float ghostPos [4][2] = {{-14.5,12},{-14.5,-13},{13.5,-13},{13.5,12}};
+float ghostPos [numberOfGhosts][2]= {{-14.5,12},{-14.5,-13},{13.5,-13},{13.5,12},{-2.5,0},{-2.5,-1}};
 float ghost1step = 0;
 float ghost2step = 0;
 float ghost3step = 0;
 float ghost4step = 0;
+float ghost5step = 0;
+float ghost6step = 0;
 
 // Texture Data
 GLubyte* floor_tex;
@@ -602,6 +606,110 @@ void ghost4()
 	}
 }
 
+void ghost5()
+{
+	if (ghost5step > -1 && ghost5step < 8)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+	else if (ghost5step >7 && ghost5step <12)
+	{
+		ghostPos[4][1] += 0.125;
+	}
+	else if (ghost5step >11 && ghost5step <24)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+	else if (ghost5step >23 && ghost5step <36)
+	{
+		ghostPos[4][1] += 0.125;
+	}
+	else if (ghost5step >35 && ghost5step <48)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+	else if (ghost5step >47 && ghost5step <60)
+	{
+		ghostPos[4][1] += 0.125;
+	}
+	else if (ghost5step >59 && ghost5step <120)
+	{
+		ghostPos[4][0] += 0.125;
+	}
+	else if (ghost5step >119 && ghost5step <132)
+	{
+		ghostPos[4][1] -= 0.125;
+	}
+	else if (ghost5step >131 && ghost5step <168)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+	else if (ghost5step >167 && ghost5step <184)
+	{
+		ghostPos[4][1] -= 0.125;
+	}
+	else if (ghost5step >183 && ghost5step <200)
+	{
+		ghostPos[4][0] += 0.125;
+	}
+	else if (ghost5step >199 && ghost5step <208)
+	{
+		ghostPos[4][0] -= 0.125;
+	}
+}
+
+void ghost6()
+{
+	if (ghost6step > -1 && ghost6step < 8)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+	else if (ghost6step >7 && ghost6step <12)
+	{
+		ghostPos[5][1] -= 0.125;
+	}
+	else if (ghost6step >11 && ghost6step <24)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+	else if (ghost6step >23 && ghost6step <36)
+	{
+		ghostPos[5][1] -= 0.125;
+	}
+	else if (ghost6step >35 && ghost6step <48)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+	else if (ghost6step >47 && ghost6step <60)
+	{
+		ghostPos[5][1] -= 0.125;
+	}
+	else if (ghost6step >59 && ghost6step <120)
+	{
+		ghostPos[5][0] += 0.125;
+	}
+	else if (ghost6step >119 && ghost6step <132)
+	{
+		ghostPos[5][1] += 0.125;
+	}
+	else if (ghost6step >131 && ghost6step <168)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+	else if (ghost6step >167 && ghost6step <184)
+	{
+		ghostPos[5][1] += 0.125;
+	}
+	else if (ghost6step >183 && ghost6step <200)
+	{
+		ghostPos[5][0] += 0.125;
+	}
+	else if (ghost6step >199 && ghost6step <208)
+	{
+		ghostPos[5][0] -= 0.125;
+	}
+}
+
 void updateLightPosition(float x, float z){
 	pos0[0] = x;
 	pos0[0] = z;
@@ -696,7 +804,7 @@ void renderShapes() {
 	resetLightingProperties();
 
 	// create ghosts
-	for(int i = 0; i < 4; i++) {
+	for(int i = 0; i < numberOfGhosts; i++) {
 		glPushMatrix();
 			drawGhost(ghostPos[i][0], -1.0f, ghostPos[i][1]);
 		glPopMatrix();
@@ -824,6 +932,7 @@ void setScene() {
 		glutSetWindow(mainWin);
 		glutPostRedisplay();
 	}
+	//These "ghost" functions move the ghost in a particular pattern depending on starting positions
 	ghost1();
 	if (ghost1step == 143.5)
 	{
@@ -859,6 +968,24 @@ void setScene() {
 	else
 	{
 		ghost4step += 0.5;
+	}
+	ghost5();
+	if (ghost5step == 207.5)
+	{
+		ghost5step = 0;
+	}
+	else
+	{
+		ghost5step += 0.5;
+	}
+	ghost6();
+	if (ghost6step == 207.5)
+	{
+		ghost6step = 0;
+	}
+	else
+	{
+		ghost6step += 0.5;
 	}
 	renderGameWin();
 	renderTopWin();
