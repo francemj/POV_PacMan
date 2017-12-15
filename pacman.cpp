@@ -44,7 +44,8 @@ int winWidth;
 int frame;
 
 // Light Position
-float pos[4] = {x,0,z,0};
+float pos0[4] = {x,0,z,0};
+float pos1[4] = {x,5,z,0};
 
 float glow_amb[] = {0.1f, 0, 0.1f, 1.0};
 float glow_dif[] = {1, 0, 0, 1.0};
@@ -67,41 +68,6 @@ GLubyte* image;
 const int first = 31;
 const int second = 28;
 float wallArray[first][second];
-
-// LOOK AT: for lighting properties
-
-//this material is not needed, testing purposes only
-float amb_floor[4] = {0.2,0.2,0.2,1};
-float diff_floor[4] = {0.8,0.8,0.8,1};
-float spec_floor[4] = {0.0,0.0,0.0,0.1};
-float shine_floor = 0;
-float amb_turq[4] ={ 0.1f, 0.18725f, 0.1745f, 0.8f };
-float diff_turq[4] ={0.396f, 0.74151f, 0.69102f, 0.8f };
-float spec_turq[4] ={0.297254f, 0.30829f, 0.306678f, 0.8f };
-float shine_turq = 12.8f;
-float amb_gold[4] ={ 0.24725f, 0.1995f, 0.0745f, 1.0f };
-float diff_gold[4] ={0.75164f, 0.60648f, 0.22648f, 1.0f };
-float spec_gold[4] ={0.628281f, 0.555802f, 0.366065f, 1.0f };
-float shine_gold =51.2f ;
-float amb_white[4] ={ 0.05f,0.05f,0.05f,1.0f };
-float diff_white[4] ={ 0.5f,0.5f,0.5f,1.0f};
-float spec_white[4] ={ 0.7f,0.7f,0.7f,1.0f};
-float shine_white = 10.0f;
-float amb_red[4] ={ 0.05f,0.0f,0.0f,1.0f };
-float diff_red[4] ={ 0.5f,0.4f,0.4f,1.0f};
-float spec_red[4] ={ 0.7f,0.04f,0.04f,1.0f};
-float shine_red = 10.0f;
-
-// //testing purposes only
-// /* LIGHTING */
-// float light0_pos[] = {15.0, 15.0, -10.0, 1.0};
-// float amb0[4] = {1, 1, 1, 1};
-// float diff0[4] = {1, 1, 1, 1};
-// float spec0[4] = {1, 1, 1, 1};
-// float light1_pos[] = {10.0, 15.0, -10.0, 1.0};
-// float amb1[4] = {1, 1, 1, 1};
-// float diff1[4] = {1, 1, 1, 1};
-// float spec1[4] = {1, 1, 1, 1};
 
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
@@ -251,11 +217,35 @@ void setRedGlow() {
 }
 
 void setGroundColour() {
-	glow_em[0] = 0; 
-	glow_em[1] = 0; 
-	glow_em[2] = 1; 
+	// Ambience
+	glow_amb[0] = 0.25f;
+	glow_amb[1] = 0.25f; 
+	glow_amb[2] = 0.25f; 
+	glow_amb[3] = 1;
+	// Emission
+	glow_em[0] = 0.25f;
+	glow_em[1] = 0.25f; 
+	glow_em[2] = 0.25f; 
 	glow_em[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+}
+
+void setWallColour() {
+	// Ambience
+	glow_amb[0] = 0;
+	glow_amb[1] = 0; 
+	glow_amb[2] = 1; 
+	glow_amb[3] = 1;
+	
+	// Diffuse
+	glow_dif[0] = 0; 
+	glow_dif[1] = 0; 
+	glow_dif[2] = 1; 
+	glow_dif[3] = 1;
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
 }
 
 void setBlack(){
@@ -273,9 +263,9 @@ void setWhite(){
 }
 
 void setGhostColour() {
-	glow_dif[0] = 1; 
-	glow_dif[1] = 0; 
-	glow_dif[2] = 1; 
+	glow_dif[0] = 1;
+	glow_dif[1] = 0;
+	glow_dif[2] = 0;
 	glow_dif[3] = 1;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
 }
@@ -287,8 +277,8 @@ void setGhostColour() {
 void drawPacDots() {
 	glPushMatrix();
 		setPacDotsColour();
-		glTranslatef(0,1.5f,0);
-		glutSolidSphere(0.15,50,50);
+		glTranslatef(0,-0.25f,0);
+		glutSolidSphere(0.05,50,50);
 		resetLightingProperties();
 	glPopMatrix();
 }
@@ -296,15 +286,15 @@ void drawPacDots() {
 void drawPowerUps() {
 	glPushMatrix();
 		setPowerUpColour();
-		glTranslatef(0,1.5f,0);
-		glutSolidSphere(0.3,50,50);
+		glTranslatef(0,-0.25f,0);
+		glutSolidSphere(0.1,50,50);
 		resetLightingProperties();
 	glPopMatrix();
 }
 
 void drawPacMan() {
 	setPacManColour();
-	glutSolidSphere(0.2, 4, 4);
+	glutSolidSphere(0.2, 10, 10);
 	resetLightingProperties();
 }
 
@@ -399,28 +389,9 @@ void renderShapes() {
 			drawGhost();
 		glPopMatrix();
 	}
-
-	// create Pac Dots
-	for(int i = -3; i < 3; i++)
-		for(int j=-3; j < 3; j++)
-		{
-			glPushMatrix();
-			glTranslatef(i*10.0f+5, 0.0f, j * 10.0f+5);
-			drawPacDots();
-			glPopMatrix();
-		}
-
-	// create Power Ups
-	for(int i = -3; i < 3; i++)
-		for(int j=-3; j < 3; j++)
-		{
-			glPushMatrix();
-			glTranslatef(i*10.0f, 0.0f, j*10.0f+5);
-			drawPowerUps();
-			glPopMatrix();
-		}
 	
 	//create map
+	setWallColour();
 	for (int i = 0; i < first; i++)
 	{
 		for (int j = 0; j < second; j++)
@@ -431,9 +402,18 @@ void renderShapes() {
 			{
 				glutSolidCube(1);
 			}
+			else if (wallArray[i][j] == 68)
+			{
+				drawPowerUps();
+			}
+			else if (wallArray[i][j] == 0)
+			{
+				drawPacDots();
+			}
 			glPopMatrix();	
 		}
 	}
+	resetLightingProperties();
 }
 
 // render mainWin, gameWin, topWin, sideWin, scoreWin
@@ -446,6 +426,14 @@ void renderMainWin() {
 void renderGameWin() {
 	glutSetWindow(gameWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	pos0[0] = x;
+	pos0[2] = z;
+	glLightfv(GL_LIGHT0, GL_POSITION, pos0);
+
+	pos1[0] = x;
+	pos1[2] = z;
+	glLightfv(GL_LIGHT0, GL_POSITION, pos1);
 
 	glLoadIdentity();
 	gluLookAt(x, y, z, x + mX,y + mY,z + mZ, 0.0f,1.0f,0.0f);
@@ -464,7 +452,7 @@ void renderTopWin() {
 	glutSetWindow(topWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(x, y + 15, z, x,y - 1,z, mX, 0.0f, mZ);
+	gluLookAt(x, y + 10, z, x,y - 1,z, 1, 0.0f, 0);
 
 	// create PacMan
 	glPushMatrix();
@@ -480,7 +468,7 @@ void renderSideWin() {
 	glutSetWindow(sideWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(x-mZ*10, y, z+mX*10, x, y, z, 0.0f, 1.0f, 0.0f);
+	gluLookAt(x-mZ*1.1, y, z+mX*1.1, x, y, z, 0.0f, 1.0f, 0.0f);
 
 	// create PacMan
 	glPushMatrix();
@@ -673,8 +661,9 @@ void init() {
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 
-	glLightfv(GL_LIGHT0, GL_POSITION, pos);
+	glLightfv(GL_LIGHT1, GL_POSITION, pos1);
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
