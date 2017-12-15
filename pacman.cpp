@@ -92,13 +92,11 @@ GLubyte* floor_tex;
 int widthTex, heightTex, maxTex;
 GLuint textures[2];
 
-<<<<<<< HEAD
 //score
 int score = 0;
-=======
+
 // Power Up State
-int poweredUp = 1;
->>>>>>> Ren-David/RealTimeFeature
+int poweredUp = 0;
 
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
