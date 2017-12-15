@@ -387,13 +387,13 @@ void drawFloor() {
 		glTexCoord2f(0, 0);
 		glVertex3f(15,-0.5, -14.5);
 
-		glTexCoord2f(0, 1);
+		glTexCoord2f(0, 10);
 		glVertex3f(-16,-0.5, -14.5);
 
-		glTexCoord2f(1, 1);
+		glTexCoord2f(10, 10);
 		glVertex3f(-16,-0.5, 13.5);
 
-		glTexCoord2f(1, 0);
+		glTexCoord2f(10, 0);
 		glVertex3f(15,-0.5, 13.5);
 	glEnd();
 }
