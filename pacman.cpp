@@ -944,6 +944,7 @@ void renderSideWin() {
 	// create PacMan
 	glPushMatrix();
 		glTranslatef(x,y,z);
+		glScalef(1.5,1.5,1.5);
 		drawPacMan();
 	glPopMatrix();
 
