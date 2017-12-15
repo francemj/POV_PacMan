@@ -54,9 +54,8 @@ int winBorder = 6;
 //Map Generation
 int width, height, maximum;
 GLubyte* image;
-//std::vector<std::vector<float>> wallMap;
-const int first = 28;
-const int second = 31;
+const int first = 31;
+const int second = 28;
 float wallArray[first][second];
 
 //this material is not needed, testing purposes only
@@ -134,20 +133,12 @@ GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
     img = (GLubyte*)malloc(3*sizeof(GLuint)*nm);
     s=255.0/k;
 	
-	//std::vector<float> tempVec;
     /* for every pixel, grab the read green and blue values, storing them in the image data array */
     for(i=0;i<nm;i++)
     {
-//		tempVec.clear();
         fscanf(fd,"%d %d %d",&red, &green, &blue );
         img[3*nm-3*i-3]=red*s;
-//		if (i%n == 0)
-//		{
-//			wallMap.push_back(tempVec);	
-//		}
-//		wallMap.at(floor(i/n)).push_back(red);
 		wallArray[(int) floor(i/n)][i%n] = img[3*nm-3*i-3];
-//		printf("%d, %d, %d\n", (int) floor(i/n), i%n, wallMap.at(floor(i/n)).at(i%n));
     }
     
     /* finally, set the "return parameters" (width, height, maximum) and return the image array */
@@ -282,9 +273,9 @@ void renderShapes() {
 	glMaterialfv(GL_FRONT, GL_SPECULAR, spec_floor);
 	glMaterialf(GL_FRONT, GL_SHININESS, shine_floor);
 	glPushMatrix();
-	glTranslatef(0,-1,0);
+	glTranslatef(-0.5,-1,-0.5);
 	glColor3f(0,0,0); //color of floor
-	glScalef(32,1,29); //size of floor
+	glScalef(31,1,28); //size of floor
 	glutSolidCube(1);
 	glPopMatrix();
 
