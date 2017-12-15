@@ -69,6 +69,13 @@ const int first = 31;
 const int second = 28;
 float wallArray[first][second];
 
+//Ghost Positions
+float ghostPos [4][2] = {{-14.5,12},{-14.5,-13},{13.5,-13},{13.5,12}};
+float ghost1step = 0;
+float ghost2step = 0;
+float ghost3step = 0;
+float ghost4step = 0;
+
 GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
 {
     GLubyte* img;
@@ -89,7 +96,6 @@ GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
         printf("%s is not a PPM file!\n",file);
         exit(0);
     }
-    printf("%s is a PPM file\n", file);
     fscanf(fd, "%c",&c);
     
     /* next, skip past the comments - any line starting with #*/
@@ -121,6 +127,8 @@ GLubyte* LoadPPM(char* file, int* width, int* height, int* maximum)
     *width = n;
     *height = m;
     *maximum = k;
+	
+	return image;
 }
 
 void setProjection(int width, int height) {
@@ -180,8 +188,8 @@ void resetLightingProperties() {
 		glow_em[i] = 0; 
 	}
 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT, GL_EMISSION, glow_em);
 }
 
 void setPacDotsColour() {
@@ -189,7 +197,7 @@ void setPacDotsColour() {
 	glow_em[1] = 1; 
 	glow_em[2] = 0; 
 	glow_em[3] = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+	glMaterialfv(GL_FRONT, GL_EMISSION, glow_em);
 }
 
 void setPacManColour() {
@@ -197,7 +205,7 @@ void setPacManColour() {
 	glow_dif[1] = 1; 
 	glow_dif[2] = 0; 
 	glow_dif[3] = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_dif);
+	glMaterialfv(GL_FRONT, GL_EMISSION, glow_dif);
 }
 
 void setPowerUpColour() {
@@ -205,7 +213,7 @@ void setPowerUpColour() {
 	glow_em[1] = 0; 
 	glow_em[2] = 1; 
 	glow_em[3] = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+	glMaterialfv(GL_FRONT, GL_EMISSION, glow_em);
 }
 
 void setRedGlow() {
@@ -213,7 +221,7 @@ void setRedGlow() {
 	glow_em[1] = 0; 
 	glow_em[2] = 0; 
 	glow_em[3] = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+	glMaterialfv(GL_FRONT, GL_EMISSION, glow_em);
 }
 
 void setGroundColour() {
@@ -227,8 +235,8 @@ void setGroundColour() {
 	glow_em[1] = 0.25f; 
 	glow_em[2] = 0.25f; 
 	glow_em[3] = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, glow_amb);
+	glMaterialfv(GL_FRONT, GL_EMISSION, glow_em);
 }
 
 void setWallColour() {
@@ -244,22 +252,22 @@ void setWallColour() {
 	glow_dif[2] = 1; 
 	glow_dif[3] = 1;
 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, glow_amb);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, glow_dif);
 }
 
 void setBlack(){
 	for(int i = 0; i < 4; i++){
 		glow_dif[i] = 0; 
 	}
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, glow_dif);
 }
 
 void setWhite(){
 	for(int i = 0; i < 4; i++){
 		glow_dif[i] = 1; 
 	}
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, glow_dif);
 }
 
 void setGhostColour() {
@@ -267,7 +275,7 @@ void setGhostColour() {
 	glow_dif[1] = 0;
 	glow_dif[2] = 0;
 	glow_dif[3] = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, glow_dif);
 }
 
 // 	***************************
@@ -278,7 +286,7 @@ void drawPacDots() {
 	glPushMatrix();
 		setPacDotsColour();
 		glTranslatef(0,-0.25f,0);
-		glutSolidSphere(0.05,50,50);
+		glutSolidSphere(0.05,10,10);
 		resetLightingProperties();
 	glPopMatrix();
 }
@@ -287,7 +295,7 @@ void drawPowerUps() {
 	glPushMatrix();
 		setPowerUpColour();
 		glTranslatef(0,-0.25f,0);
-		glutSolidSphere(0.1,50,50);
+		glutSolidSphere(0.1,10,10);
 		resetLightingProperties();
 	glPopMatrix();
 }
@@ -298,12 +306,12 @@ void drawPacMan() {
 	resetLightingProperties();
 }
 
-void drawGhost() {
+void drawGhost(float x, float y, float z) {
 
 	setGhostColour();
 
 	// cylinder body using quadric object
-	glTranslatef(0.0f, 0.0f, 0.0f);
+	glTranslatef(x, y, z);
 	glRotatef(-90, 1.0, 0.0, 0.0);
 	GLUquadricObj *quadObj;
 	quadObj = gluNewQuadric();
@@ -358,6 +366,166 @@ void switchOrthographicProj() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+//Ghost Algorithms
+void ghost1()
+{
+	if (ghost1step > -1 && ghost1step < 44)
+	{
+		ghostPos[0][1] -= 0.125;
+	}
+	else if (ghost1step >43 && ghost1step <60)
+	{
+		ghostPos[0][0] += 0.125;
+	}
+	else if (ghost1step >59 && ghost1step <84)
+	{
+		ghostPos[0][1] += 0.125;
+	}
+	else if (ghost1step >83 && ghost1step <96)
+	{
+		ghostPos[0][0] += 0.125;
+	}
+	else if (ghost1step >95 && ghost1step <116)
+	{
+		ghostPos[0][1] += 0.125;
+	}
+	else if (ghost1step >115 && ghost1step <145)
+	{
+		ghostPos[0][0] -= 0.125;
+	}
+}
+
+void ghost2()
+{
+	if (ghost2step > -1 && ghost2step < 44)
+	{
+		ghostPos[1][1] += 0.125;
+	}
+	else if (ghost2step >43 && ghost2step <60)
+	{
+		ghostPos[1][0] += 0.125;
+	}
+	else if (ghost2step >59 && ghost2step <84)
+	{
+		ghostPos[1][1] -= 0.125;
+	}
+	else if (ghost2step >83 && ghost2step <96)
+	{
+		ghostPos[1][0] += 0.125;
+	}
+	else if (ghost2step >95 && ghost2step <116)
+	{
+		ghostPos[1][1] -= 0.125;
+	}
+	else if (ghost2step >115 && ghost2step <145)
+	{
+		ghostPos[1][0] -= 0.125;
+	}
+}
+
+void ghost3()
+{
+	if (ghost3step > -1 && ghost3step < 44)
+	{
+		ghostPos[2][1] += 0.125;
+	}
+	else if (ghost3step >43 && ghost3step <56)
+	{
+		ghostPos[2][0] -= 0.125;
+	}
+	else if (ghost3step >55 && ghost3step <68)
+	{
+		ghostPos[2][1] -= 0.125;
+	}
+	else if (ghost3step >67 && ghost3step <80)
+	{
+		ghostPos[2][0] -= 0.125;
+	}
+	else if (ghost3step >79 && ghost3step <92)
+	{
+		ghostPos[2][1] -= 0.125;
+	}
+	else if (ghost3step >91 && ghost3step <104)
+	{
+		ghostPos[2][0] -= 0.125;
+	}
+	else if (ghost3step >103 && ghost3step <124)
+	{
+		ghostPos[2][1] -= 0.125;
+	}
+	else if (ghost3step >123 && ghost3step <136)
+	{
+		ghostPos[2][0] += 0.125;
+	}
+	else if (ghost3step >135 && ghost3step <144)
+	{
+		ghostPos[2][1] += 0.125;
+	}
+	else if (ghost3step >143 && ghost3step <156)
+	{
+		ghostPos[2][0] += 0.125;
+	}
+	else if (ghost3step >155 && ghost3step <164)
+	{
+		ghostPos[2][1] -= 0.125;
+	}
+	else if (ghost3step >163 && ghost3step <177)
+	{
+		ghostPos[2][0] += 0.125;
+	}
+}
+
+void ghost4()
+{
+	if (ghost4step > -1 && ghost4step < 44)
+	{
+		ghostPos[3][1] -= 0.125;
+	}
+	else if (ghost4step >43 && ghost4step <56)
+	{
+		ghostPos[3][0] -= 0.125;
+	}
+	else if (ghost4step >55 && ghost4step <68)
+	{
+		ghostPos[3][1] += 0.125;
+	}
+	else if (ghost4step >67 && ghost4step <80)
+	{
+		ghostPos[3][0] -= 0.125;
+	}
+	else if (ghost4step >79 && ghost4step <92)
+	{
+		ghostPos[3][1] += 0.125;
+	}
+	else if (ghost4step >91 && ghost4step <104)
+	{
+		ghostPos[3][0] -= 0.125;
+	}
+	else if (ghost4step >103 && ghost4step <124)
+	{
+		ghostPos[3][1] += 0.125;
+	}
+	else if (ghost4step >123 && ghost4step <136)
+	{
+		ghostPos[3][0] += 0.125;
+	}
+	else if (ghost4step >135 && ghost4step <144)
+	{
+		ghostPos[3][1] -= 0.125;
+	}
+	else if (ghost4step >143 && ghost4step <156)
+	{
+		ghostPos[3][0] += 0.125;
+	}
+	else if (ghost4step >155 && ghost4step <164)
+	{
+		ghostPos[3][1] += 0.125;
+	}
+	else if (ghost4step >163 && ghost4step <176)
+	{
+		ghostPos[3][0] += 0.125;
+	}
+}
 
 void updatePositionFB(float movement){
 	x += movement *0.1f*mX;
@@ -383,12 +551,12 @@ void renderShapes() {
 	resetLightingProperties();
 
 	// create ghosts
-	for(int i=-3; i < 3; i++) {
+	for(int i = 0; i < 4; i++) {
 		glPushMatrix();
-			glTranslatef(-1.0f, -1.0f, i);
-			drawGhost();
+			drawGhost(ghostPos[i][0], -1.0f, ghostPos[i][1]);
 		glPopMatrix();
 	}
+
 	
 	//create map
 	setWallColour();
@@ -520,11 +688,47 @@ void setScene() {
 		glutSetWindow(mainWin);
 		glutPostRedisplay();
 	}
-
+	ghost1();
+	if (ghost1step == 143.5)
+	{
+		ghost1step = 0;
+	}
+	else
+	{
+		ghost1step += 0.5;
+	}
+	ghost2();
+	if (ghost2step == 143.5)
+	{
+		ghost2step = 0;
+	}
+	else
+	{
+		ghost2step += 0.5;
+	}
+	ghost3();
+	if (ghost3step == 175.5)
+	{
+		ghost3step = 0;
+	}
+	else
+	{
+		ghost3step += 0.5;
+	}
+	ghost4();
+	if (ghost4step == 175.5)
+	{
+		ghost4step = 0;
+	}
+	else
+	{
+		ghost4step += 0.5;
+	}
 	renderGameWin();
 	renderTopWin();
 	renderSideWin();
 	renderScoreWin();
+	glutPostRedisplay();
 }
 
 void keyboardActions(){
@@ -665,11 +869,11 @@ void init() {
 
 	glLightfv(GL_LIGHT1, GL_POSITION, pos1);
 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, glow_amb);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glow_dif);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, glow_spec);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, glow_em);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shiny);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, glow_amb);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, glow_dif);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, glow_spec);
+	glMaterialfv(GL_FRONT, GL_EMISSION, glow_em);
+	glMaterialf(GL_FRONT, GL_SHININESS, shiny);
 
 	glShadeModel(GL_SMOOTH);
 	glFrontFace(GL_CCW);
@@ -695,8 +899,6 @@ void init() {
 int main(int argc, char **argv) {
 	//map texture
 	LoadPPM("map.ppm", &width, &height, &maximum);
-	printf("%d\n", sizeof(wallArray)/sizeof(wallArray[0]));
-	printf("%d\n", sizeof(wallArray[0]));
 
 	// init GLUT and create main window
 	glutInit(&argc, argv);
