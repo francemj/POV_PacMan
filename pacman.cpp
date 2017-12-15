@@ -429,27 +429,29 @@ void switchOrthographicProj() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void updateLightPosition(float x, float z){
+	pos0[0] = x;
+	pos0[0] = z;
+	glLightfv(GL_LIGHT0, GL_POSITION, pos0);
+}
 
 void updatePositionFB(float movement){
 	x += movement *0.1f*mX;
 	z += movement *0.1f*mZ;
+	updateLightPosition(x, z);
 	//printf("x: %f, z: %f, mX: %f, mY: %f\n", x, z, mX, mZ);
 }
 
 void updatePositionLR(float movement){
 	x += movement *0.1f*xL;
 	z += movement *0.1f*zL;
+	updateLightPosition(x, z);
 	//printf("x: %f, z: %f, mX: %f, mY: %f\n", x, z, mX, mZ);
 }
 
 void renderShapes() {
 	//Ground Plane
 	setGroundColour();
-	// glPushMatrix();
-	// 	glTranslatef(-0.5,-1,-0.5);
-	// 	glScalef(31,1,28); //size of floor
-	// 	glutSolidCube(1);
-	// glPopMatrix();
 	drawFloor(); // Draw Floor
 	resetLightingProperties();
 
@@ -497,14 +499,6 @@ void renderMainWin() {
 void renderGameWin() {
 	glutSetWindow(gameWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	pos0[0] = x;
-	pos0[2] = z;
-	glLightfv(GL_LIGHT0, GL_POSITION, pos0);
-
-	pos1[0] = x;
-	pos1[2] = z;
-	glLightfv(GL_LIGHT0, GL_POSITION, pos1);
 
 	glLoadIdentity();
 	gluLookAt(x, y, z, x + mX,y + mY,z + mZ, 0.0f,1.0f,0.0f);
