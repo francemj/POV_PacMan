@@ -82,6 +82,9 @@ float ghost2step = 0;
 float ghost3step = 0;
 float ghost4step = 0;
 
+//Pac Dots and Power Ups
+float pacDotsArray[first][second];
+
 // Texture Data
 GLubyte* floor_tex;
 int widthTex, heightTex, maxTex;
@@ -341,19 +344,19 @@ void setGhostColour() {
 // 			Dots Models
 // 	***************************
 
-void drawPacDots() {
+void drawPacDots(int x, int z) {
 	glPushMatrix();
 		setPacDotsColour();
-		glTranslatef(0,-0.25f,0);
+		glTranslatef(0, -0.25f + pacDotsArray[x][z], 0);
 		glutSolidSphere(0.05,10,10);
 		resetLightingProperties();
 	glPopMatrix();
 }
 
-void drawPowerUps() {
+void drawPowerUps(int x, int z) {
 	glPushMatrix();
 		setPowerUpColour();
-		glTranslatef(0,-0.25f,0);
+		glTranslatef(0, -0.25f + pacDotsArray[x][z], 0);
 		glutSolidSphere(0.1,10,10);
 		resetLightingProperties();
 	glPopMatrix();
@@ -625,6 +628,21 @@ void ghostHitDetection(){
 	}
 }
 
+void pacDotsHitDetection(){
+	int xVal = round(x + 15.5);
+	int zVal = round(z + 14);
+	if(pacDotsArray[xVal][zVal] == 0){
+		if(wallArray[xVal][zVal] == 0){
+			pacDotsArray[xVal][zVal] = -10.0f;
+			//update score
+		}
+		else if(wallArray[xVal][zVal] == 68){
+			pacDotsArray[xVal][zVal] = -10.0f;
+			//do power up things
+		}
+	}
+}
+
 bool checkPos(){
 	int xVal = round(x + 15.5);
 	int zVal = round(z + 14);
@@ -733,11 +751,11 @@ void renderShapes() {
 			}
 			else if (wallArray[i][j] == 68)
 			{
-				drawPowerUps();
+				drawPowerUps(i, j);
 			}
 			else if (wallArray[i][j] == 0)
 			{
-				drawPacDots();
+				drawPacDots(i, j);
 			}
 			glPopMatrix();	
 		}
@@ -878,6 +896,7 @@ void setScene() {
 	}
 
 	ghostHitDetection();
+	pacDotsHitDetection();
 	renderGameWin();
 	renderTopWin();
 	renderSideWin();
