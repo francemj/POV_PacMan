@@ -21,16 +21,37 @@ float mX=0.0f;
 float mZ=-1.0f;
 float mY=0.0f;
 
+// need for ray picking
+double* m_start = new double[3];
+double* m_end = new double[3];
+
 //values for left and right
 float xL;
 float xR;
 float zL;
 float zR;
 
+//values for buttons
+float xB1;
+float yB1;
+float zB1;
+float scaleB1;
+
+float xB2;
+float yB2;
+float zB2;
+float scaleB2;
+
+// hold mouse position
+float mouseX, mouseY;
+
 // hold xz camera
 float x=7.5f;
 float z=-0.5f;
 float y=0.0f;
+float textX=0.0f;
+float textY=0.0f;
+float textZ=0.0f;
 
 // key states
 float dAngle=0.0f;
@@ -65,8 +86,9 @@ char s[50];
 //keyboard buttons array
 bool keys[4];
 
-int mainWin, gameWin, topWin, sideWin, scoreWin;
+int mainWin, introWin, gameWin, topWin, sideWin, scoreWin;
 int winBorder = 6;
+bool isStarted = false;
 
 //Map Generation
 int width, height, maximum;
@@ -89,6 +111,8 @@ float pacDotsArray[first][second];
 
 // Texture Data
 GLubyte* floor_tex;
+GLubyte* ghosts_tex;
+GLubyte* team_tex;
 int widthTex, heightTex, maxTex;
 GLuint textures[2];
 
@@ -212,6 +236,12 @@ void setProjection(int width, int height) {
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void reset() {
+	x=7.5f;
+	z=-0.5f;
+	y=0.0f;
+}
+
 void resize(int width, int height) {
 	if(height == 0)
 		height = 1;
@@ -241,6 +271,11 @@ void resize(int width, int height) {
 	glutPositionWindow(2*(winWidth/3.0) + winBorder/2, 2*(winHeight/3.0) + winBorder/2);
 	glutReshapeWindow(winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
 	setProjection(winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
+
+	glutSetWindow(introWin);
+	glutPositionWindow(winBorder, winBorder);
+	glutReshapeWindow((winWidth-winBorder), (winHeight-winBorder));
+	setProjection((winWidth-winBorder), (winHeight-winBorder));
 
 }
 
@@ -357,7 +392,7 @@ void drawPacDots(int x, int z) {
 	glPushMatrix();
 		setPacDotsColour();
 		glTranslatef(0, -0.25f + pacDotsArray[x][z], 0);
-		glutSolidSphere(0.05,10,10);
+		glutSolidSphere(0.05,4,4);
 		resetLightingProperties();
 	glPopMatrix();
 }
@@ -366,7 +401,7 @@ void drawPowerUps(int x, int z) {
 	glPushMatrix();
 		setPowerUpColour();
 		glTranslatef(0, -0.25f + pacDotsArray[x][z], 0);
-		glutSolidSphere(0.1,10,10);
+		glutSolidSphere(0.1,8,8);
 		resetLightingProperties();
 	glPopMatrix();
 }
@@ -425,19 +460,16 @@ void drawFloor() {
 }
 
 // create a string using glut
-void renderBitmapString(
-	float x,
-	float y,
-	float z,
+void renderStrokeString(
 	void *font,
 	char *string
 	) {
 	char *c;
-	glRasterPos3f(x,y,z);
-	for(c=string; *c != '\0'; c++) {
-		glutBitmapCharacter(font, *c);
+	for (c=string; *c != '\0'; c++) {
+		glutStrokeCharacter(font, *c);
 	}
 }
+
 
 void switchPerspectiveProj() {
 	glMatrixMode(GL_PROJECTION);
@@ -449,9 +481,7 @@ void switchOrthographicProj() {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	glPushMatrix();
-	glLoadIdentity();
-	gluOrtho2D(0, winWidth, winHeight, 0);
+	glOrtho(0.0, winWidth, 1.0, winHeight, -10.0, 10.0);
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -734,9 +764,9 @@ void ghostHitDetection(){
 		ghostZ = ghostPos[i][1];
 
 		if(abs(x - ghostX) < 0.05 && abs(z - ghostZ) < 0.05){
-			printf("ghost %i HIT\n", i);
-			printf("xpos: %f, zpos: %f\n", x, z);
-			printf("ghostx: %f, ghostz: %f\n", ghostX, ghostZ);
+			// printf("ghost %i HIT\n", i);
+			// printf("xpos: %f, zpos: %f\n", x, z);
+			// printf("ghostx: %f, ghostz: %f\n", ghostX, ghostZ);
 		}
 	}
 }
@@ -919,6 +949,86 @@ void renderGameWin() {
 	glutSwapBuffers();
 }
 
+void renderIntroWin() {
+	glutSetWindow(introWin);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	gluLookAt(textX + mouseX/50.0, textY + 90, textZ + mouseY/50.0, textX, textY, textZ, 1,0.0f,0);
+
+	switchOrthographicProj();
+	char main[10] = {'G','a','m','e',' ','I','d','l','e'};
+	char pacman3d[10] = {'P','a','c','M','a','n','3','D',};
+	char reset[13] = {'P','l','a','y', '/','r','e','s','e','t'};
+	char resume[10] = {'r','e','s','u','m','e'};
+
+	glPushMatrix();
+	glLoadIdentity();
+	glTranslatef(2*winWidth/5,1*winHeight/8,0);
+	glScalef(0.4,0.4,0.4);
+	setWallColour();
+	renderStrokeString(GLUT_STROKE_ROMAN,main);
+	glPopMatrix();
+
+	glPushMatrix();
+	glLoadIdentity();
+	glTranslatef(2*winWidth/5,5*winHeight/6,0);
+	glScalef(0.4,0.4,0.4);
+	setWallColour();
+	renderStrokeString(GLUT_STROKE_ROMAN,pacman3d);
+	glPopMatrix();
+
+	glPushMatrix();
+	glLoadIdentity();
+	glTranslatef(5*winWidth/11,4*winHeight/6,0);
+	glScalef(0.2,0.2,0.2);
+	setRedGlow();
+	renderStrokeString(GLUT_STROKE_ROMAN,reset);
+	glPopMatrix();
+
+
+	glPushMatrix();
+	glLoadIdentity();
+	glTranslatef(6*winWidth/13,2*winHeight/7,0);
+	glScalef(0.2,0.2,0.2);
+	setRedGlow();
+	renderStrokeString(GLUT_STROKE_ROMAN,resume);
+	glPopMatrix();
+
+
+
+	switchPerspectiveProj();
+	
+	// create yellow cube
+	glPushMatrix();
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_GEN_S); //enable texture coordinate generation
+	glEnable(GL_TEXTURE_GEN_T);
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	setPacManColour();
+	glTranslatef(1.5,0,0);
+	glScalef(8, 8, 10);
+	glTranslatef(textX-1,textY,textZ);
+	// glColor3f(1,0,0);
+	glutSolidCube(1);
+	scaleB1 = 2;
+	scaleB2 = 2;
+	xB1 = -5;
+	yB1 = 0;
+	zB1 = 0;
+	xB2 = 10;
+	yB2 = 0;
+	zB2 = 0;
+	glTranslatef(1.5, 0, 0);
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	glutSolidCube(1);
+	glDisable(GL_TEXTURE_GEN_S); //enable texture coordinate generation
+	glDisable(GL_TEXTURE_GEN_T);
+	glDisable(GL_TEXTURE_2D);
+	glPopMatrix();
+	glutSwapBuffers();
+}
+
 void renderTopWin() {
 	glutSetWindow(topWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -956,8 +1066,22 @@ void renderScoreWin() {
 	glutSetWindow(scoreWin);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	frame++;
+		
+	gluLookAt(x, y, z, x,y ,z, 1, 1.0f, 0);
+	// create yellow circle
+	glPushMatrix();
+	glColor3f(1.0, 1.0, 0.0);
+	
+	glTranslatef(x,y,z);
+	glDisable(GL_TEXTURE_GEN_S); //enable texture coordinate generation
+	glDisable(GL_TEXTURE_GEN_T);
+	glDisable(GL_TEXTURE_2D);
+	glScalef(2,2,2);
+	setRedGlow();
+	glRotatef(130,1,1,1);
+	glutSolidCube(1);
 
+	frame++;
 	currtime=glutGet(GLUT_ELAPSED_TIME);
 	if (currtime - timebase > 1000) {
 		sprintf(s,"PacMan FPS:%4.2f",
@@ -965,12 +1089,37 @@ void renderScoreWin() {
 		timebase = currtime;
 		frame = 0;
 	}
+	char a[100]; // the array
+	sprintf(a,"%ld", score);
+	// int i = 0;
+	// printf("the %i\n", score);
+	// int n = score;
+	// while (n) { // loop till there's nothing left
+	//     a[i] = n % 10; // assign the last digit
+	// 	i++;
+	//     n /= 10; // "right shift" the number
+	// }
+
+	char score[11] = {'S','c','o','r','e',':',' ',a[0], a[1], a[2], a[3]};
 
 	switchOrthographicProj();
 
 	glPushMatrix();
 	glLoadIdentity();
-	renderBitmapString(5,30,0,GLUT_BITMAP_HELVETICA_12,s);
+	glColor3f(0.0,0,0.0);
+	glTranslatef(10,90,0);
+	glScalef(0.4,0.4,0.4);
+	setRedGlow();
+	renderStrokeString(GLUT_STROKE_ROMAN,score);
+	glPopMatrix();
+
+	glPushMatrix();
+	glLoadIdentity();
+	glColor3f(0.0,0,0.0);
+	glTranslatef(10,10,0);
+	glScalef(0.4,0.4,0.4);
+	setPacDotsColour();
+	renderStrokeString(GLUT_STROKE_ROMAN,s);
 	glPopMatrix();
 
 	switchPerspectiveProj();
@@ -981,7 +1130,6 @@ void renderScoreWin() {
 		drawPacMan();
 	glPopMatrix();
 
-	renderShapes();
 	glutSwapBuffers();
 }
 
@@ -995,76 +1143,84 @@ void setScene() {
 	}
 
 	if (dMoveFB || dMoveLR) {
-		updatePositionFB(dMoveFB);
-		updatePositionLR(dMoveLR);
+		if (isStarted) {
+			updatePositionFB(dMoveFB);
+			updatePositionLR(dMoveLR);
+			glutSetWindow(mainWin);
+			glutPostRedisplay();
+		}
+	}
+	if (isStarted) {
+		//These "ghost" functions move the ghost in a particular pattern depending on starting positions
+		ghost1();
+		if (ghost1step == 143.5)
+		{
+			ghost1step = 0;
+		}
+		else
+		{
+			ghost1step += 0.5;
+		}
+		ghost2();
+		if (ghost2step == 143.5)
+		{
+			ghost2step = 0;
+		}
+		else
+		{
+			ghost2step += 0.5;
+		}
+		ghost3();
+		if (ghost3step == 175.5)
+		{
+			ghost3step = 0;
+		}
+		else
+		{
+			ghost3step += 0.5;
+		}
+		ghost4();
+		if (ghost4step == 175.5)
+		{
+			ghost4step = 0;
+		}
+		else
+		{
+			ghost4step += 0.5;
+		}
+
+		ghost5();
+		if (ghost5step == 207.5)
+		{
+			ghost5step = 0;
+		}
+		else
+		{
+			ghost5step += 0.5;
+		}
+		ghost6();
+		if (ghost6step == 207.5)
+		{
+			ghost6step = 0;
+		}
+		else
+		{
+			ghost6step += 0.5;
+		}
 	}
 
-	//These "ghost" functions move the ghost in a particular pattern depending on starting positions
-	ghost1();
-	if (ghost1step == 143.5)
-	{
-		ghost1step = 0;
+	if (isStarted) {
+		ghostHitDetection();
+		pacDotsHitDetection();
+		renderGameWin();
+		renderTopWin();
+		renderSideWin();
+		renderScoreWin();
+		glutPostRedisplay();
+	} else {
+		renderIntroWin();
+		glutPostRedisplay();
 	}
-	else
-	{
-		ghost1step += 0.5;
-	}
-	ghost2();
-	if (ghost2step == 143.5)
-	{
-		ghost2step = 0;
-	}
-	else
-	{
-		ghost2step += 0.5;
-	}
-	ghost3();
-	if (ghost3step == 175.5)
-	{
-		ghost3step = 0;
-	}
-	else
-	{
-		ghost3step += 0.5;
-	}
-	ghost4();
-	if (ghost4step == 175.5)
-	{
-		ghost4step = 0;
-	}
-	else
-	{
-		ghost4step += 0.5;
-	}
-
-	ghost5();
-	if (ghost5step == 207.5)
-	{
-		ghost5step = 0;
-	}
-	else
-	{
-		ghost5step += 0.5;
-	}
-	ghost6();
-	if (ghost6step == 207.5)
-	{
-		ghost6step = 0;
-	}
-	else
-	{
-		ghost6step += 0.5;
-	}
-
-
-	ghostHitDetection();
-	pacDotsHitDetection();
-	renderGameWin();
-	renderTopWin();
-	renderSideWin();
-	renderScoreWin();
-	glutSetWindow(mainWin);
-	glutPostRedisplay();
 }
 
 void keyboardActions(){
@@ -1122,10 +1278,21 @@ void keyboardActions(){
 
 void keyboard(unsigned char key, int xIn, int yIn) {
 	switch (key) {
-
-		case 27: {
-			glutDestroyWindow(mainWin);
-			exit(0);
+		case 'q': {
+			exit(0); break;
+		}
+		case 'p': {
+			if (!isStarted) {
+				glutSetWindow(introWin);
+				glutHideWindow();
+				isStarted = true;
+				printf("Game Paused\n");
+			} else {
+				glutSetWindow(introWin);
+				glutShowWindow();
+				printf("Game Unpaused\n");
+				isStarted = false;
+			}
 			break;
 		}
 		case 'w': keys[0] = true; break;
@@ -1146,6 +1313,7 @@ void uKeyboard(unsigned char key, int xIn, int yIn) {
 		case 'd': keys[3] = false; break;
 	}
 	keyboardActions();
+	glutPostRedisplay();
 }
 
 void dSpecialKeyboard(int key, int xIn, int yIn) {
@@ -1167,13 +1335,117 @@ void uSpecialKeyboard(int key, int xIn, int yIn) {
 
 void mouseButton(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON) {
+		// onClick DOWN
+			if(state == GLUT_DOWN){
 
-		// onClick UP
-		if (state == GLUT_UP) {
-			
-		}
-		else  { // onClick DOWN
+			if(!isStarted) {
 
+				// printf("clicking\n");
+				// printf("(%f,%f,%f)----(%f,%f,%f)\n", m_start[0], m_start[1], m_start[2], m_end[0], m_end[1], m_end[2]);
+
+				double matModelView[16], matProjection[16];
+				int viewport[4];
+
+				glGetDoublev(GL_MODELVIEW_MATRIX, matModelView);
+				glGetDoublev(GL_PROJECTION_MATRIX, matProjection);
+				glGetIntegerv(GL_VIEWPORT, viewport);
+
+				double winX = (double)x;
+				double winY = viewport[3] - (double)y;
+
+				gluUnProject(winX, winY, 0.0, matModelView, matProjection, viewport, &m_start[0], &m_start[1],  &m_start[2]);
+				gluUnProject(winX, winY, 160.0, matModelView, matProjection, viewport, &m_end[0], &m_end[1],  &m_end[2]);
+				
+				// printf("(%f,%f,%f)----(%f,%f,%f)\n\n", m_start[0], m_start[1], m_start[2], m_end[0], m_end[1], m_end[2]);
+
+				//------------------------------------------
+
+				double* R0 = new double[3];
+				double* Rd = new double[3];
+
+				double xDiff = m_end[0] - m_start[0];
+				double yDiff = m_end[1] - m_start[1];
+				double zDiff = m_end[2] - m_start[2];
+
+				double mag = sqrt(xDiff*xDiff + yDiff*yDiff + zDiff*zDiff);
+				R0[0] = m_start[0];
+				R0[1] = m_start[1];
+				R0[2] = m_start[2];
+
+				Rd[0] = xDiff / mag;
+				Rd[1] = yDiff / mag;
+				Rd[2] = zDiff / mag;
+
+				double A = Rd[0] * Rd[0] + Rd[1] * Rd[1] + Rd[2] * Rd[2];
+
+				double* R0Pc = new double[3];
+
+				// button 1
+				R0Pc[0] = R0[0] - xB1;
+				R0Pc[1] = R0[1] - yB1;
+				R0Pc[2] = R0[2] - zB1;
+
+					scaleB1 = 8;
+					scaleB2 = 8;
+					xB1 = 0.5;
+					yB1 = 0;
+					zB1 = 0;
+					xB2 = 7;
+					yB2 = 0;
+					zB2 = 0;
+
+				double B = 2 * ( R0Pc[0] * Rd[0] + R0Pc[1] * Rd[1] + R0Pc[2] * Rd[2]);
+				double C = (R0Pc[0]*R0Pc[0] + R0Pc[1] * R0Pc[1] + R0Pc[2] * R0Pc[2]) - (scaleB1*scaleB1);
+
+				double discriminent = B*B - 4* A *C;
+
+				double t1, t2;
+				if(discriminent < 0){
+					// printf("no intersection!\n");
+				}
+				else{
+					printf("click button 1\n");
+					t1 = (-B + sqrt(discriminent)) / (2*A);
+					t2 = (-B - sqrt(discriminent)) / (2*A);
+					isStarted = true;
+					// printf("Intersection with object %i at t= %f, %f\n", i, t1, t2);
+					glutSetWindow(introWin);
+					glutHideWindow();
+					glutSetWindow(mainWin);
+					glutPostRedisplay();
+
+				}
+				if (!isStarted) {
+					// button 2
+					R0Pc[0] = R0[0] - xB2;
+					R0Pc[1] = R0[1] - yB2;
+					R0Pc[2] = R0[2] - zB2;
+
+					B = 2 * ( R0Pc[0] * Rd[0] + R0Pc[1] * Rd[1] + R0Pc[2] * Rd[2]);
+					C = (R0Pc[0]*R0Pc[0] + R0Pc[1] * R0Pc[1] + R0Pc[2] * R0Pc[2]) - (scaleB2*scaleB2);
+
+					discriminent = B*B - 4* A *C;
+
+					if(discriminent < 0) {
+						// printf("no intersection!\n");
+					}
+					else {
+						printf("click button 2\n");
+						t1 = (-B + sqrt(discriminent)) / (2*A);
+						t2 = (-B - sqrt(discriminent)) / (2*A);
+						reset();
+						isStarted = true;
+						glutSetWindow(introWin);
+						glutHideWindow();
+						glutSetWindow(mainWin);
+						glutPostRedisplay();
+					}
+				}
+
+			}
+			else  { // onClick DOWN
+				// printf("x,y,z: %f,%f,%f", mX,y,mZ);
+			}
 		}
 	}
 }
@@ -1182,16 +1454,21 @@ void mouseMotion(int x, int y){
 }
 
 void mouseMove(int x, int y) {
-	dAngle = (x - dX) * 0.010f;
+	if (isStarted) {
+		dAngle = (x - dX) * 0.010f;
 	
-	mX = sin(angle + dAngle);
-	mZ = -cos(angle + dAngle);
+		mX = sin(angle + dAngle);
+		mZ = -cos(angle + dAngle);
 
-	xL = sin(1.62 + dAngle);
-	zL = -cos(1.62 + dAngle);
+		xL = sin(1.62 + dAngle);
+		zL = -cos(1.62 + dAngle);
 
-	glutSetWindow(mainWin);
-	glutPostRedisplay();
+		glutSetWindow(mainWin);
+		glutPostRedisplay();
+	} else {
+		mouseX = x;
+		mouseY = y;
+	}
 }
 
 
@@ -1224,7 +1501,7 @@ void init() {
 	//enable texturing
 	glEnable(GL_TEXTURE_2D);
 	//generate 2 texture IDs, store them in array "textures"
-	glGenTextures(2, textures);
+	glGenTextures(3, textures);
 	//load the texture (snail)
 	floor_tex = LoadPPM2("floor.ppm", &widthTex, &heightTex, &maxTex);
 	//setup first texture (using snail image)
@@ -1236,10 +1513,37 @@ void init() {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//create a texture using the "floor_tex" array data
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTex, heightTex, 0, GL_RGB, GL_UNSIGNED_BYTE, floor_tex);
+
+		//load the texture
+	ghosts_tex = LoadPPM2("ghosts.ppm", &width, &height, &maximum);
+
+	//setup first texture
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	//set texture parameters
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+	//create a texture using array data
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, ghosts_tex);
+
+	team_tex = LoadPPM2("team.ppm", &width, &height, &maximum);
+
+	//setup first texture
+	glBindTexture(GL_TEXTURE_2D, textures[2]);
+	//set texture parameters
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+	//create a texture using array data
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, team_tex);
 	
 
 	//hides cursor for game
-	glutSetCursor(GLUT_CURSOR_NONE);
+	// glutSetCursor(GLUT_CURSOR_NONE);
 
 	// register callbacks
 	glutIgnoreKeyRepeat(1);
@@ -1265,6 +1569,7 @@ int main(int argc, char **argv) {
 	// callbacks for main window
 	glutDisplayFunc(setScene);
 	glutReshapeFunc(resize);
+	glutIdleFunc(setScene);
 	init();
 
 	// sub windows
@@ -1282,6 +1587,10 @@ int main(int argc, char **argv) {
 
 	scoreWin = glutCreateSubWindow(mainWin, 2*(winWidth/3.0) + winBorder/2, 2*(winHeight/3.0) + winBorder/2, winWidth/3-winBorder*3/2, winHeight/3 - winBorder*3/2);
 	glutDisplayFunc(renderScoreWin);
+	init();
+
+	introWin = glutCreateSubWindow(mainWin, winBorder,winBorder,(winWidth-winBorder), (winHeight-winBorder));
+	glutDisplayFunc(renderIntroWin);
 	init();
 
 	// enter GLUT event processing cycle
