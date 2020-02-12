@@ -14,6 +14,7 @@
 
 #define numberOfGhosts 6
 
+//float angle = 0.1f;
 float angle = 0.0f;
 
 // hold main camera
